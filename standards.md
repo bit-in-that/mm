@@ -33,7 +33,9 @@ Please use the following packages/frameworks for the following purposes:
 
 - `arrow` should be used for reading and writing parqet files
 
-- `modules` package should be used for referencing functions from other files or packages 
+- `modules` package should be used for referencing functions from other files or packages
+ 
+- `config` package for handling inputs via yaml files 
 
 ## Coding practices
 
@@ -44,6 +46,8 @@ Please use the following packages/frameworks for the following purposes:
    -  File paths should be set using the `here()` function from the `here` package
 
    -  All file paths should be relative
+
+- Inputs and parameters will be handled using `yaml` files and the `config` R package
 
 # Data standards
 
@@ -85,7 +89,7 @@ The repository contains the following folders
 
     - `02_data_pipelines`: scripts for retreiving data via apis, manipulating it into tables and saving it to a database
 
-    - `03_data_pipelines`: scripts for retreiving and cleaning data
+    - `03_data_exports`: scripts for exporting data
 
     - `99_adhoc`: one-off or wuick code
     
