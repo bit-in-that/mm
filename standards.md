@@ -33,7 +33,7 @@ Please use the following packages/frameworks for the following purposes:
 
 - `arrow` should be used for reading and writing parqet files
 
-- `modules` package should be used for referencing functions from other files or packages
+- `box` package should be used for referencing functions from other files or packages
  
 - `config` package for handling inputs via yaml files 
 
@@ -49,17 +49,30 @@ Please use the following packages/frameworks for the following purposes:
 
 - Inputs and parameters will be handled using `yaml` files and the `config` R package
 
+- Production code should be modular and clean
+
+    - Use the `box` package to control imports better (avoiod using `library()`)
+
+    - Adhoc code need not follow these practices (e.g. can use more `library()` statements) but should be converted to more modular code if it is to be productionised 
+
+    - Use comments sparingly and with intent, don't use them to explain the obvious, use them to explain *why*, *when* or *where* rather than *what* or *how* something is done (the later can be deduced by reading the code)
+
 # Data standards
 
-Production data is to be stored in a sqlite database in `data/db` folder in this repository. 
+- Production data is to be stored in a sqlite database in `data/db` folder in this repository. 
 
-Some outputs will also be stored in other formats:
+    - Databases should be appropriately normalised (columns shoudl be on the same observational unit)
 
-- If they need to be in a compressed format that retains column types, use `.parquet` files
+    - Raw data should be stored with original column names but processed data should change them to camel case where relevant
 
-- If they need to be in a format that is easy for humans to open and read, use `.csv` files
+- Some outputs will also be stored in other formats:
 
-- If more niche R objects that are not in a neat rectangular table format need to be saved, use `.Rds` files
+    - If they need to be in a compressed format that retains column types, use `.parquet` files
+
+    - If they need to be in a format that is easy for humans to open and read, use `.csv` files
+
+    - If more niche R objects that are not in a neat rectangular table format need to be saved, use `.Rds` files
+
 
 # Naming conventions
 
@@ -72,6 +85,7 @@ Some outputs will also be stored in other formats:
     - afl: Australian Football League
     - af: AFL Fantasy
     - sc: supercoach
+    - api: application programming interface (we also typically mean restful apis here)
 
 - Names should be informative and consistent (e.g. if there is are two functions that do the same thing for both AFL Fantasy and Supercoach, the only difference in their name should be a `af` or `sc`)
 
@@ -83,15 +97,15 @@ The repository contains the following folders
 
 - `R`: contrain R code, inputs and RStudio project
 
-    - `00_inputs`: where parameters and other inputs are kept
+    - `a0_inputs`: where parameters and other inputs are kept
 
-    - `01_modules`: functions used by other scripts
+    - `a1_modules`: functions used by other scripts
 
-    - `02_data_pipelines`: scripts for retreiving data via apis, manipulating it into tables and saving it to a database
+    - `b0_data_pipelines`: scripts for retreiving data via apis, manipulating it into tables and saving it to a database
 
-    - `03_data_exports`: scripts for exporting data
+    - `b1_data_exports`: scripts for exporting data
 
-    - `99_adhoc`: one-off or wuick code
+    - `zz_adhoc`: one-off or wuick code
     
 
 - `data`: output all data here
