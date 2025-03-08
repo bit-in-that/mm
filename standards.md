@@ -106,4 +106,4 @@ The repository contains the following folders
 
 - `standards.md`: this document, outlining the standards and conventions for the benefit of humans and LLMs alike
 
-- `R/`
+- `R/R.Rproj`: Rstudio project (should always be used to open RStudio as to set the correct working directory)
