@@ -71,25 +71,39 @@ Some outputs will also be stored in other formats:
 
 - Names should be informative and consistent (e.g. if there is are two functions that do the same thing for both AFL Fantasy and Supercoach, the only difference in their name should be a `af` or `sc`)
 
-# Folder structure
+# Repository structure
 
-- `R`
+## Folders
 
-    - 00_inputs: where parameters and other inputs are kept
+The repository contains the following folders
 
-    - 01_modules:
+- `R`: contrain R code, inputs and RStudio project
 
+    - `00_inputs`: where parameters and other inputs are kept
 
-    - 02_data_pipelines:
+    - `01_modules`: functions used by other scripts
 
+    - `02_data_pipelines`: scripts for retreiving data via apis, manipulating it into tables and saving it to a database
 
-    - 99_adhoc:
+    - `03_data_pipelines`: scripts for retreiving and cleaning data
+
+    - `99_adhoc`: one-off or wuick code
     
 
 - `data`: output all data here
 
-    - `db`: where the sqlite database is stored 
+    - `db`: where the sqlite databases are stored
 
-        - `migrations`: `.sql` files and accompanying `.cmd` files that executes them  that specify the columns in the sqlite tables
+        - `migrations`: `.sql` files that contain `CREATE TABLE` statements that specify the schema and relationships of all tables and accompanying `.cmd` files that execute them 
 
-    - `other`: where other data exports
+    - `exports`: where data exported data extracts are saved in `.csv`, `.parquet` and `.Rds` formats
+ 
+    - `temp`: where temporary data is stored (`.gitignore`'d)
+
+## Files
+
+- `README.md`: explains this repository
+
+- `standards.md`: this document, outlining the standards and conventions for the benefit of humans and LLMs alike
+
+- `R/`
