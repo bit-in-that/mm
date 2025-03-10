@@ -1,0 +1,4 @@
+!.gitkeep
+data/temp/*
+data/db/test/*
+.Rproj.user
