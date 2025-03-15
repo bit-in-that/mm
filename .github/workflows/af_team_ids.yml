@@ -38,8 +38,8 @@ jobs:
 
     - name: Run Script
       run: |
-        setwd("R/b1_data_exports")
-        eval(parse(file = "af_team_ids.R"))
+        options(box.path = "R/b1_data_exports")
+        source("R/b1_data_exports/af_team_ids.R", echo = TRUE)
       shell: Rscript {0}
 
     - name: Commit
