@@ -37,7 +37,8 @@ jobs:
 
     - name: Run Script
       run: |
-        print(dir(recursive = TRUE, full.names = TRUE)) |> normalizePath()
+        print(dir(recursive = TRUE, full.names = TRUE, all.files = TRUE)) |> normalizePath()
+        print(dir("/home/runner/work/_temp", recursive = TRUE, full.names = TRUE, all.files = TRUE)) |> normalizePath()
         print(getwd())
         print(here::here())
         options(box.path = here::here())
