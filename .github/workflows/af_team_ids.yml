@@ -37,12 +37,8 @@ jobs:
 
     - name: Run Script
       run: |
-        print(dir(recursive = TRUE, full.names = TRUE, all.files = TRUE)) |> normalizePath()
-        print(dir("/home/runner/work/_temp", recursive = TRUE, full.names = TRUE, all.files = TRUE)) |> normalizePath()
-        print(getwd())
-        print(here::here())
-        options(box.path = here::here())
-        box::use(./R/b1_data_exports/af_team_ids)
+        # for some reason the starting path for box in the enviorment "/home/runner/work/_temp" instead of "/home/runner/work/mm/mm/"
+        box::use(../../mm/mm/R/b1_data_exports/af_team_ids)
       shell: Rscript {0}
 
     - name: Commit
