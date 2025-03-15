@@ -38,7 +38,7 @@ jobs:
     - name: Run Script
       run: |
         # for some reason the starting path for box in the enviorment "/home/runner/work/_temp" instead of "/home/runner/work/mm/mm/"
-        box::use(../../mm/mm/R/b1_data_exports/af_team_ids)
+        box::use(../mm/mm/R/b1_data_exports/af_team_ids)
       shell: Rscript {0}
 
     - name: Commit
