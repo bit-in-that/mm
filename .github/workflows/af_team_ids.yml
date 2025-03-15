@@ -28,8 +28,9 @@ jobs:
 
     - name: create .env file
       run: |
-        touch R/.env
-        echo "AF_SESSION_ID=${{ secrets.AF_SESSION_ID }}" > R/.env
+        cd R/b1_data_exports
+        touch .env
+        echo "AF_SESSION_ID=${{ secrets.AF_SESSION_ID }}" > .env
 
     - name: Install dependencies
       run: install.packages(c("box", "httr2", "dplyr", "purrr", "dotenv", "here", "arrow"))
@@ -37,8 +38,8 @@ jobs:
 
     - name: Run Script
       run: |
-        setwd("R")
-        source("b1_data_exports/af_team_ids.R", echo = TRUE)
+        setwd("R/b1_data_exports")
+        eval(parse(file = "af_team_ids.R"))
       shell: Rscript {0}
 
     - name: Commit
