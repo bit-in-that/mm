@@ -32,7 +32,7 @@ jobs:
         echo "AF_SESSION_ID=${{ secrets.AF_SESSION_ID }}" > .env
 
     - name: Install dependencies
-      run: install.packages(c("box", "httr2", "dplyr", "purrr", "dotenv", "here", "arrow"))
+      run: install.packages(c("box", "httr2", "dplyr", "purrr", "dotenv", "here", "arrow", "jsonlite"))
       shell: Rscript {0}
 
     - name: Run Script
