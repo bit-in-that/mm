@@ -28,7 +28,6 @@ jobs:
 
     - name: create .env file
       run: |
-        cd R/b1_data_exports
         touch .env
         echo "AF_SESSION_ID=${{ secrets.AF_SESSION_ID }}" > .env
 
@@ -38,8 +37,7 @@ jobs:
 
     - name: Run Script
       run: |
-        options(box.path = "R/b1_data_exports")
-        source("R/b1_data_exports/af_team_ids.R", echo = TRUE)
+        box::use(R/b1_data_exports/af_team_ids)
       shell: Rscript {0}
 
     - name: Commit
