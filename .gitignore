@@ -1,4 +1,11 @@
+# Project specific
 !.gitkeep
 data/temp/*
 data/db/test/*
+
+# R specific
 .Rproj.user
+.RHistory
+
+# General
+.env

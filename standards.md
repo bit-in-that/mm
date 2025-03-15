@@ -57,6 +57,8 @@ Please use the following packages/frameworks for the following purposes:
 
     - Use comments sparingly and with intent, don't use them to explain the obvious, use them to explain *why*, *when* or *where* rather than *what* or *how* something is done (the later can be deduced by reading the code)
 
+- Use the native pipe operator `|>` instead of magrittr (`%>%`)
+
 # Data standards
 
 - Production data is to be stored in a sqlite database in `data/db` folder in this repository. 
