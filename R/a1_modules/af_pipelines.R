@@ -5,8 +5,8 @@ box::use(
 )
 
 box::use(
-  ../a1_modules/af_api,
-  ../a1_modules/af_tabulate
+  ./af_api,
+  ./af_tabulate
 )
 
 #' @export
