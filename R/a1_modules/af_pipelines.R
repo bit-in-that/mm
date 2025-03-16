@@ -120,3 +120,44 @@ team_lineups <- function(session_id, team_ids, round_num = NULL) {
         af_tabulate$team_lineup(team_round = NULL)
     })
 }
+
+#' @export
+rounds <- function() {
+  af_api$get_rounds() |>
+    af_tabulate$rounds()
+
+}
+
+#' @export
+current_round <- function() {
+  rounds() |>
+    filter(status != "scheduled") |>
+    pull(round) |>
+    max()
+}
+
+#' @export
+max_rankings_offsets <- (0:50)*50
+
+#' @export
+rankings <- function(session_id, offsets = max_rankings_offsets, order = c("rank", "avg_points", "round_points", "highest_round_score", "team_value"), order_direction = c("ASC", "DESC"), round = NULL, club = NULL, state = NULL) {
+
+  base_query <- af_api$request_rankings(session_id, offset = 0, order = order, order_direction = order_direction, round = round, club = club, state = state)
+
+  req_list <- offsets |>
+    map(~{
+      base_query |>
+        req_url_query(offset = .x)
+    })
+
+  resp_list <- req_list |>
+    req_perform_parallel(on_error = "continue")
+
+  resp_list |>
+    resps_successes() |>
+    resps_data(\(resp) {
+      resp |>
+        resp_body_json() |>
+        af_tabulate$rankings()
+    })
+}
