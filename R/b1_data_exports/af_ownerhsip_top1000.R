@@ -53,5 +53,5 @@ af_ownership <- lineups_top1000 |>
 
 fwrite(af_ownership, here("data/exports/2025/_for_mm", paste0("af_ownership_r", current_round,".csv")))
 
-jsonlite::write_json(af_ownership, path = here("data/exports/2025/_for_mm", paste0("af_ownership_r", current_round,".json")))
+write_json(af_ownership, path = here("data/exports/2025/_for_mm", paste0("af_ownership_r", current_round,".json")))
 
