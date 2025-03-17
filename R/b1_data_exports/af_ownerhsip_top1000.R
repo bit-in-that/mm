@@ -11,8 +11,6 @@ box::use(
   arrow[write_parquet, read_parquet]
 )
 
-resp_body_rounds <- af_api$get_rounds()
-
 load_dot_env() # a .env file doesn't exist, create one with your session ID ("AF_SESSION_ID") in the R folder
 session_id <- Sys.getenv("AF_SESSION_ID")
 
