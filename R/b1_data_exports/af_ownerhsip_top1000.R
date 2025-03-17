@@ -11,8 +11,6 @@ box::use(
   arrow[write_parquet, read_parquet]
 )
 
-resp_body_rounds <- af_api$get_rounds()
-
 load_dot_env() # a .env file doesn't exist, create one with your session ID ("AF_SESSION_ID") in the R folder
 session_id <- Sys.getenv("AF_SESSION_ID")
 
@@ -53,5 +51,5 @@ af_ownership <- lineups_top1000 |>
 
 fwrite(af_ownership, here("data/exports/2025/_for_mm", paste0("af_ownership_r", current_round,".csv")))
 
-jsonlite::write_json(af_ownership, path = here("data/exports/2025/_for_mm", paste0("af_ownership_r", current_round,".json")))
+write_json(af_ownership, path = here("data/exports/2025/_for_mm", paste0("af_ownership_r", current_round,".json")))
 
