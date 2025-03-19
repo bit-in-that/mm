@@ -1,7 +1,8 @@
 box::use(
   dplyr[...],
   purrr[...],
-  httr2[...]
+  httr2[...],
+  utils[tail]
 )
 
 box::use(
@@ -118,7 +119,15 @@ team_lineups <- function(session_id, team_ids, round_num = NULL) {
       resp |>
         resp_body_json() |>
         af_tabulate$team_lineup(team_round = NULL)
-    })
+    }) |>
+    group_by(team_id, round, line_name) |>
+    mutate(
+      is_utility = (utility_position == line_name) & (player_id == tail(player_id, 1))
+    ) |>
+    ungroup() |>
+    select(
+      -utility_position
+    )
 }
 
 #' @export
