@@ -301,6 +301,21 @@ team_lineup <- function(resp_body_team, team_round = NULL) {
   }
   captain <- resp_body_team$result$lineup$captain
   vice_captain <- resp_body_team$result$lineup$vice_captain
+  if(length(captain) == 0) {
+    captain <- -1L
+  }
+  if(length(vice_captain) == 0) {
+    vice_captain <- -1L
+  }
+
+  formation <- resp_body_team$result$formation
+
+  utility_position <- case_when(
+    formation == "6-8-2-6/3-2-1-2" ~ "Def",
+    formation == "6-8-2-6/2-3-1-2" ~ "Mid",
+    formation == "6-8-2-6/2-2-2-2" ~ "Ruc",
+    formation == "6-8-2-6/2-2-1-3" ~ "Fwd"
+    )
 
   emergencies <- resp_body_team$result$lineup$bench$emergency |>
     unlist()
@@ -323,8 +338,11 @@ team_lineup <- function(resp_body_team, team_round = NULL) {
     transmute(
       team_id = resp_body_team$result$id,
       round = as.integer(team_round),
+      utility_position = utility_position,
       player_id,
       line_name,
+      is_bench,
+      is_emergency = player_id %in% emergencies,
       is_captain = player_id == captain,
       is_vice_captain = player_id == vice_captain,
     )
