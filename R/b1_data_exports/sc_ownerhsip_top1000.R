@@ -45,7 +45,7 @@ lineups_leftover <- rankings |>
   sc_pipelines$team_lineups(access_token = access_token)
 
 sc_ownership <- lineups_top1000 |>
-  bind_rows(lineups_leftover) |>
+  # bind_rows(lineups_leftover) |>
   left_join(
     rankings |> select(team_id, raw_position),
     by = c("user_team_id" = "team_id")
@@ -70,7 +70,7 @@ sc_ownership <- lineups_top1000 |>
   arrange(desc(OwnershipTop1000)) |>
   select(-player_id)
 
-fwrite(af_ownership, here("data/exports/2025/_for_mm", paste0("sc_ownership_r", current_round,".csv")))
+fwrite(sc_ownership, here("data/exports/2025/_for_mm", paste0("sc_ownership_r", current_round,".csv")))
 
-write_json(af_ownership, path = here("data/exports/2025/_for_mm", paste0("sc_ownership_r", current_round,".json")))
+write_json(sc_ownership, path = here("data/exports/2025/_for_mm", paste0("sc_ownership_r", current_round,".json")))
 

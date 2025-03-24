@@ -89,5 +89,5 @@ mm_cba <- player_stats |>
   )
 
 
-fwrite(mm_cba, here("data/exports/2025/_for_mm", "cba_r1.csv"))
+fwrite(mm_cba, here("data/exports/2025/_for_mm", paste0("cba_r",current_round,".csv")))
 
