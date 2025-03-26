@@ -7,7 +7,7 @@ box::use(
   dotenv[load_dot_env],
   here[here],
   dplyr[...],
-  arrow[read__parquet, write_parquet]
+  arrow[read_parquet, write_parquet]
 )
 
 load_dot_env() # a .env file doesn't exist, create one with your session ID in the R folder
