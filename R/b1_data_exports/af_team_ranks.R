@@ -25,7 +25,7 @@ af_team_ranks <- af_team_ids |>
     team_id,
     round,
     round_score = score,
-    overall_score = cumsum(score),
+    overall_score = cumsum(coalesce(score, 0)),
     round_rank,
     overall_rank = rank
   ) |>
