@@ -1,5 +1,6 @@
 # The clean_ functions below are not exported because they are just helper functions
 # components skipped: last_season_scores from coach version
+# TODO: add is emergency and is utility to lineup
 box::use(
   dplyr[...],
   purrr[...]
@@ -300,6 +301,21 @@ team_lineup <- function(resp_body_team, team_round = NULL) {
   }
   captain <- resp_body_team$result$lineup$captain
   vice_captain <- resp_body_team$result$lineup$vice_captain
+  if(length(captain) == 0) {
+    captain <- -1L
+  }
+  if(length(vice_captain) == 0) {
+    vice_captain <- -1L
+  }
+
+  formation <- resp_body_team$result$formation
+
+  utility_position <- case_when(
+    formation == "6-8-2-6/3-2-1-2" ~ "Def",
+    formation == "6-8-2-6/2-3-1-2" ~ "Mid",
+    formation == "6-8-2-6/2-2-2-2" ~ "Ruc",
+    formation == "6-8-2-6/2-2-1-3" ~ "Fwd"
+    )
 
   emergencies <- resp_body_team$result$lineup$bench$emergency |>
     unlist()
@@ -322,8 +338,11 @@ team_lineup <- function(resp_body_team, team_round = NULL) {
     transmute(
       team_id = resp_body_team$result$id,
       round = as.integer(team_round),
+      utility_position = utility_position,
       player_id,
       line_name,
+      is_bench,
+      is_emergency = player_id %in% emergencies,
       is_captain = player_id == captain,
       is_vice_captain = player_id == vice_captain,
     )
@@ -385,3 +404,125 @@ team_ranks_by_round <- function(resp_body_rank) {
   )
 
 }
+
+#' @export
+rounds <- function(resp_body_rounds) {
+  resp_body_rounds |>
+    map(clean_round) |>
+    list_rbind() |>
+    rename(round = id)
+
+}
+
+#' @export
+rounds_matches <- function(resp_body_rounds) {
+  resp_body_rounds |>
+    map(clean_round_matches) |>
+    list_rbind() |>
+    rename(match_id = id)
+}
+
+#' @export
+rounds_locked_squads <- function(resp_body_rounds) {
+  resp_body_rounds |>
+    map(clean_round_locked_squads) |>
+    list_rbind()
+}
+
+#' @export
+rounds_bye_squads <- function(resp_body_rounds) {
+  resp_body_rounds |>
+    map(clean_round_bye_squads) |>
+    list_rbind()
+
+}
+
+clean_round <- function(round) {
+  round[c("id",  "status",  "start",  "end",  "is_bye",  "is_partial_bye",  "is_final",  "lockout",  "saturday_lockout",  "lifted_at")] |>
+    as_tibble()
+}
+
+clean_round_locked_squads <- function(round) {
+  if(length(round$locked) == 0) {
+    return(NULL)
+  }
+  round_num <- round$id
+  locked <- unlist(round$locked)
+  tibble(
+    round = round_num,
+    squad_id = locked
+  )
+
+}
+
+clean_round_bye_squads <- function(round) {
+  if(length(round$bye_squads) == 0) {
+    return(NULL)
+  }
+  round_num <- round$id
+  bye_squads <- unlist(round$bye_squads)
+  tibble(
+    round = round_num,
+    squad_id = bye_squads
+  )
+
+}
+
+clean_round_matches <- function(round) {
+  round$matches |>
+    map(clean_round_match) |>
+    list_rbind()
+}
+
+clean_round_match <- function(round_match) {
+  nullable_columns <- c("home_goals", "away_goals", "home_behinds", "away_behinds")
+
+  if("clock" %in% names(round_match)) {
+    clock <- list(
+      clock_period = round_match$clock$p,
+      clock_seconds = round_match$clock$s
+    )
+  } else {
+    clock <- list(
+      clock_period = NA_character_,
+      clock_seconds = NA_integer_
+    )
+  }
+  c(
+    round_match[setdiff(names(round_match), c("clock", nullable_columns))],
+    round_match[nullable_columns] |>
+      map(~{
+        if(is.null(.x)) {
+          NA_integer_
+        } else {
+          .x
+        }
+      }) |>
+      `names<-`(nullable_columns),
+    clock
+  ) |>
+    as_tibble()
+
+}
+
+#' @export
+rankings <- function(resp_body_rankings) {
+  resp_body_rankings$result |>
+    map(clean_ranking) |>
+    list_rbind()
+}
+
+clean_ranking <- function(ranking) {
+  if(is.null(ranking$last_round_points)) {
+    last_round_points <- list(last_round_points = NA_integer_)
+
+  } else {
+    last_round_points <- list(last_round_points = ranking$last_round_points)
+  }
+  c(
+  ranking[c("team_id", "team_name", "user_id", "firstname", "lastname",  "league_points",  "rank", "value", "salary_cap",  "avatar_version", "this_round_points", "overall_rank",  "highest_round_score")],
+  last_round_points
+  ) |>
+    as_tibble()
+}
+

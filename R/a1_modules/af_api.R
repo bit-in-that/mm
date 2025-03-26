@@ -75,7 +75,7 @@ get_player_single <- function(player_id) {
 
 #' @export
 request_team <- function(session_id, team_id, round_num = NULL) {
-  params <- list(round_num = NULL, id = team_id)
+  params <- list(round = round_num, id = team_id)
 
   request_authorised("https://fantasy.afl.com.au/afl_classic/api/teams_classic/show", session_id) |>
     req_url_query(!!!params)
@@ -113,6 +113,31 @@ get_team_rank <- function(session_id, user_id = NULL) {
     req_perform() |>
     resp_body_json()
 
+}
+
+#' @export
+request_rankings <- function(session_id, offset = 0, order = c("rank", "avg_points", "round_points", "highest_round_score", "team_value"), order_direction = c("DESC", "ASC"), round = NULL, club = NULL, state = NULL) {
+  order <- order[1]
+  order_direction <- order_direction[1]
+
+  params <- list(offset = offset, order = order, order_direction = order_direction, round = round, club = club, state = state)
+
+  request_authorised("https://fantasy.afl.com.au/afl_classic/api/teams_classic/rankings", session_id) |>
+    req_url_query(!!!params)
 
 }
+
+#' @export
+get_rankings <- function(session_id, offset = 0, order = c("rank", "avg_points", "round_points", "highest_round_score", "team_value"), order_direction = c("ASC", "DESC"), round = NULL, club = NULL, state = NULL) {
+  # club is squad_id
+  # state is: c("0" = "All States", "1" = "Australian Capital Territory", "2" = "Northern Territory", "3" = "New South Wales", "4" = "Queensland", "5" = "South Australia", "6" = "Tasmania", "7" = "Victoria", "8" = "Western Australia")
+  order <- order[1]
+  order_direction <- order_direction[1]
+
+  request_rankings(session_id, offset, order, order_direction, round, club, state) |>
+    req_perform() |>
+    resp_body_json()
+
+}
+
 
