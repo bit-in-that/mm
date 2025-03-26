@@ -349,6 +349,48 @@ team_lineup <- function(resp_body_team, team_round = NULL) {
 
 }
 
+#' @export
+team_value_current_round <- function(resp_body_team, players_by_round, prices_round = NULL) {
+# this function exists because getting the team value for the current round is tricky
+  if(is.null(prices_round)) {
+    prices_round <- get_team_latest_round(resp_body_team) + 1
+  }
+
+  player_ids <- clean_team_lineup_player_ids(resp_body_team)
+
+  team_value <- players_by_round |>
+    filter(round == prices_round) |>
+    filter(player_id %in% player_ids) |>
+    pull(price) |>
+    sum()
+
+  cash_remaining <- resp_body_team$result$salary_cap - resp_body_team$result$value
+  tibble(
+    team_id = resp_body_team$result$id,
+    round = prices_round,
+    is_current_round = TRUE,
+    team_value = team_value,
+    cash_remaining = cash_remaining
+  )
+}
+
+#' @export
+team_value_previous_round <- function(resp_body_team, prices_round = NULL) {
+  # this function exists because getting the team value for the current round is tricky
+  if(is.null(prices_round)) {
+    prices_round <- get_team_latest_round(resp_body_team)
+  }
+
+  cash_remaining <- resp_body_team$result$salary_cap - resp_body_team$result$value
+  tibble(
+    team_id = resp_body_team$result$id,
+    round = prices_round,
+    is_current_round = FALSE,
+    team_value = resp_body_team$result$value,
+    cash_remaining = cash_remaining
+  )
+}
+
 clean_team_lineup <- function(lineup) {
   lineup |>
     map2(c("Def", "Mid", "Ruc", "Fwd"), clean_team_lineup_single_line) |>
@@ -360,6 +402,15 @@ clean_team_lineup_single_line <- function(line, line_name) {
     player_id = unlist(line),
     line_name = line_name
   )
+}
+
+clean_team_lineup_player_ids <- function(resp_body_team) {
+  c(
+    resp_body_team$result$lineup[c("1", "2", "3", "4")],
+    resp_body_team$result$lineup$bench[c("1", "2", "3", "4")]
+  ) |>
+    unlist()
+
 }
 
 #' @export

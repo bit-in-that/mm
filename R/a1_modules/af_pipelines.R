@@ -95,6 +95,28 @@ team_ranks <- function(session_id, user_ids) {
 }
 
 #' @export
+team_ranks_by_round <- function(session_id, user_ids) {
+  base_query <- af_api$request_team_rank(session_id, user_id = NULL)
+
+  req_list <- user_ids |>
+    map(~{
+      base_query |>
+        req_url_query(user_id = .x)
+    })
+
+  resp_list <- req_list |>
+    req_perform_parallel(on_error = "continue")
+
+  resp_list |>
+    resps_successes() |>
+    resps_data(\(resp) {
+      resp |>
+        resp_body_json() |>
+        af_tabulate$team_ranks_by_round()
+    })
+}
+
+#' @export
 team_lineups <- function(session_id, team_ids, round_num = NULL) {
   base_query <- af_api$request_team(session_id, team_id = NULL, round_num = round_num)
 
@@ -149,6 +171,31 @@ teams <- function(session_id, team_ids, round_num = NULL) {
     })
 }
 
+#' @export
+team_value <- function(session_id, team_ids, round_num = NULL) {
+  base_query <- af_api$request_team(session_id, team_id = NULL, round_num = round_num)
+
+  req_list <- team_ids |>
+    map(~{
+      base_query |>
+        req_url_query(id = .x)
+    })
+
+  resp_list <- req_list |>
+    req_perform_parallel(on_error = "continue")
+
+
+
+  resp_list |>
+    resps_successes() |>
+    resps_data(\(resp) {
+      resp |>
+        resp_body_json() |>
+        af_tabulate$team()
+    })
+}
+
+
 
 #' @export
 rounds <- function() {
@@ -190,3 +237,83 @@ rankings <- function(session_id, offsets = max_rankings_offsets, order = c("rank
         af_tabulate$rankings()
     })
 }
+
+
+team_value_previous_round <- function(session_id, team_ids, round_num = NULL) {
+  base_query <- af_api$request_team(session_id, team_id = NULL, round_num = round_num)
+
+  req_list <- team_ids |>
+    map(~{
+      base_query |>
+        req_url_query(id = .x)
+    })
+
+  resp_list <- req_list |>
+    req_perform_parallel(on_error = "continue")
+
+  resp_list |>
+    resps_successes() |>
+    resps_data(\(resp) {
+      resp |>
+        resp_body_json() |>
+        af_tabulate$team_value_previous_round(prices_round = round_num)
+    })
+
+}
+
+team_value_current_round <- function(session_id, team_ids, round_num = NULL, players_by_round = NULL) {
+  if(is.null(round_num)) {
+    round_num <- current_round() + 1
+  }
+  if(is.null(players_by_round)) {
+    players_by_round <- players_by_round()
+  }
+
+  base_query <- af_api$request_team(session_id, team_id = NULL, round_num = round_num)
+
+  req_list <- team_ids |>
+    map(~{
+      base_query |>
+        req_url_query(id = .x)
+    })
+
+  resp_list <- req_list |>
+    req_perform_parallel(on_error = "continue")
+
+
+
+  resp_list |>
+    resps_successes() |>
+    resps_data(\(resp) {
+      resp |>
+        resp_body_json() |>
+        af_tabulate$team_value_current_round(players_by_round = players_by_round, prices_round = round_num)
+    })
+
+}
+
+#' @export
+team_value <- function(session_id, team_ids, rounds = NULL, include_current_round = TRUE, players_by_round = NULL) {
+
+  if(is.null(rounds)) {
+    rounds <- seq(current_round())
+  }
+  output <- rounds |>
+    map(team_value_previous_round, session_id = session_id, team_ids = team_ids) |>
+    list_rbind()
+
+  if(include_current_round) {
+    if(is.null(players_by_round)) {
+      players_by_round <- players_by_round()
+    }
+
+    output <- bind_rows(
+      output,
+      team_value_current_round(session_id, team_ids, players_by_round = players_by_round, round_num = max(rounds) + 1)
+    )
+  }
+
+  output
+
+}
+

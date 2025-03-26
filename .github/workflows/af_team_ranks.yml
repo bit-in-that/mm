@@ -1,0 +1,52 @@
+name: AFL Fantasy Team Ranks
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 16 * * 0" # 2AM AEST every monday
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      AF_SESSION_ID: ${{ secrets.AF_SESSION_ID }}
+
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        use-public-rspm: true
+
+    - name: get libcurl
+      run: |
+        sudo apt-get install libcurl4-openssl-dev
+
+    - name: create .env file
+      run: |
+        touch .env
+        echo "AF_SESSION_ID=${{ secrets.AF_SESSION_ID }}" > .env
+
+    - name: Install dependencies
+      run: install.packages(c("box", "httr2", "dplyr", "purrr", "dotenv", "here", "arrow", "jsonlite"))
+      shell: Rscript {0}
+
+    - name: Run Script
+      run: |
+        # for some reason the starting path for box in the enviorment "/home/runner/work/_temp" instead of "/home/runner/work/mm/mm/"
+        box::use(../mm/mm/R/b1_data_exports/af_team_ranks)
+      shell: Rscript {0}
+
+    - name: Commit
+      run: |
+        git config --global user.name 'bit in that'
+        git config --global user.email 'timothy.gummer@gmail.com'
+        git add .
+        git pull
+        git commit -m 'ACTION: get AFL Fantasy Team Ranks' || echo "No changes to commit"
+        git pull
+        git push
