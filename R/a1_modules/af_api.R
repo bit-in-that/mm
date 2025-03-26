@@ -75,7 +75,7 @@ get_player_single <- function(player_id) {
 
 #' @export
 request_team <- function(session_id, team_id, round_num = NULL) {
-  params <- list(round_num = NULL, id = team_id)
+  params <- list(round = round_num, id = team_id)
 
   request_authorised("https://fantasy.afl.com.au/afl_classic/api/teams_classic/show", session_id) |>
     req_url_query(!!!params)
