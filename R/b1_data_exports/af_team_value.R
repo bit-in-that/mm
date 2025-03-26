@@ -19,6 +19,7 @@ af_team_ranks <- arrow::read_parquet(here("data/exports/2025", "af_team_ranks.pa
 rankings <- af_pipelines$rankings(session_id)
 
 af_team_value <- af_team_ranks |>
+  filter(round == max(round)) |>
   filter(overall_rank <= 100000) |>
   pull(team_id) |>
   af_pipelines$team_value(session_id = session_id)

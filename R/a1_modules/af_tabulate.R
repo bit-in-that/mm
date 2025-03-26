@@ -441,17 +441,16 @@ team_ranks_by_round <- function(resp_body_rank) {
   rank_history <- unlist(resp_body_rank$result$rank_history)
   round_rank_history <- unlist(resp_body_rank$result$round_rank_history)
 
-  rounds <- scoreflow |>
-    names() |>
-    as.integer()
+  rounds <- rank_history |>
+    names()
 
   tibble(
     team_id = resp_body_rank$result$id,
-    round = rounds,
-    score = scoreflow,
-    league_score = league_scoreflow,
-    rank = rank_history,
-    round_rank = round_rank_history
+    round = as.integer(rounds),
+    score = scoreflow[rounds],
+    league_score = league_scoreflow[rounds],
+    rank = rank_history[rounds],
+    round_rank = round_rank_history[rounds]
   )
 
 }
