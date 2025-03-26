@@ -107,18 +107,12 @@ team_lineups <- function(session_id, team_ids, round_num = NULL) {
   resp_list <- req_list |>
     req_perform_parallel(on_error = "continue")
 
-  if(is.null(round_num)) {
-    extra_args <- list()
-  } else {
-    extra_args <- list(team_round = round_num)
-  }
-
   resp_list |>
     resps_successes() |>
     resps_data(\(resp) {
       resp |>
         resp_body_json() |>
-        af_tabulate$team_lineup(team_round = NULL)
+        af_tabulate$team_lineup(team_round = round_num)
     }) |>
     group_by(team_id, round, line_name) |>
     mutate(
@@ -129,6 +123,32 @@ team_lineups <- function(session_id, team_ids, round_num = NULL) {
       -utility_position
     )
 }
+
+
+#' @export
+teams <- function(session_id, team_ids, round_num = NULL) {
+  base_query <- af_api$request_team(session_id, team_id = NULL, round_num = round_num)
+
+  req_list <- team_ids |>
+    map(~{
+      base_query |>
+        req_url_query(id = .x)
+    })
+
+  resp_list <- req_list |>
+    req_perform_parallel(on_error = "continue")
+
+
+
+  resp_list |>
+    resps_successes() |>
+    resps_data(\(resp) {
+      resp |>
+        resp_body_json() |>
+        af_tabulate$team()
+    })
+}
+
 
 #' @export
 rounds <- function() {

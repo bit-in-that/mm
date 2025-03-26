@@ -32,11 +32,16 @@ af_coach_list_ranks <- af_coach_list |>
   pull(user_id) |>
   af_pipelines$team_ranks(session_id = session_id)
 
-af_coach_list_teams <- af_coach_list |>
+af_coach_list_team_lineups <- af_coach_list |>
   pull(team_id) |>
   af_pipelines$team_lineups(session_id = session_id)
 
-af_coach_list_teams |>
+af_coach_list_teams <- af_coach_list |>
+  pull(team_id) |>
+  af_pipelines$teams(session_id = session_id)
+
+
+af_coach_list_team_lineups |>
   full_join(
     players |> transmute(player_id, Player = paste(first_name, last_name), OwnershipTotal = owned_by, squad_id),
     by = "player_id"
@@ -63,7 +68,7 @@ af_coach_list_teams |>
   ) |>
   View()
 
-af_coach_list_teams |>
+af_coach_list_team_lineups |>
   left_join(af_coach_list_ranks, by = "team_id") |>
   group_by(team_id, firstname, lastname, name) |>
   summarise(
@@ -74,36 +79,23 @@ af_coach_list_teams |>
   filter(Has_Sam_Taylor) |>
   View()
 
-af_coach_list_teams |>
+af_coach_list_team_lineups |>
   left_join(af_coach_list_ranks, by = "team_id") |>
   group_by(team_id, firstname, lastname, name) |>
   summarise(
     Has_Lindsay = 1028531L %in% player_id,
+    Has_Knevit = 1021103 %in% player_id,
     .groups = "drop"
     ) |>
   View()
 
 
-af_coach_list_teams |>
+af_coach_list_team_lineups |>
   left_join(players, by = "player_id") |>
   View()
 
 
-
-# Example long table
-df <- tibble(
-  id = c(rep("Group1", 3), rep("Group2", 2)),
-  col_right = c("A", "B", "C", "A", "B"),
-  col_left  = c(10, 20, 30, 40, 50)
-)
-
-# Create a row identifier within each group, then pivot wider
-df_wide <- df %>%
-  group_by(id) %>%
-  mutate(row = row_number()) %>%  # helper column to align rows
-  pivot_wider(names_from = col_right, values_from = col_left)
-
-af_coach_list_teams |>
+af_coach_list_team_lineups |>
   filter(team_id == 22L) |>
   left_join(players, by = "player_id") |>
   mutate(
