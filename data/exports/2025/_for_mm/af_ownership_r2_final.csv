@@ -1,4 +1,4 @@
-Player,Team,OwnershipTotal,OwnershipTop1000,OwnershipTop100,OwnershipTop10,OwnershipTop1000_chg,OwnershipTop100_chg,OwnershipTop10_chg
+Player,Team,OwnershipTotal,OwnershipTop1000,OwnershipTop100,OwnershipTop10,OwnershipTop1000Chg,OwnershipTop100Chg,OwnershipTop10Chg
 Aaron Cadman,GWS,1.19,0,0,0,0,0,0
 Aaron Francis,SYD,0.11,0.1,0,0,0.1,0,0
 Aaron Naughton,WBD,0.73,0,0,0,-0.1,0,0
