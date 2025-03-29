@@ -98,5 +98,5 @@ setnames(data, names(data), gsub(".x","",names(data)))
 fwrite(data, here("data/exports/2025/_for_mm", paste0("cba_r", current_round,"_final.csv")))
 write_json(data, path = here("data/exports/2025/_for_mm", paste0("cba_r", current_round,"_final.json")))
 
-data <- fread("C:/Users/michael.thomas/Desktop/Michael Thomas/Moreira's Magic/mm/data/exports/2025/_for_mm/mm_data_r2.csv")
-write_json(data, "C:/Users/michael.thomas/Desktop/Michael Thomas/Moreira's Magic/mm/data/exports/2025/_for_mm/mm_data_r2.json")
+data <- fread(here("data/exports/2025/_for_mm/mm_data_r2.csv"))
+write_json(data, here("data/exports/2025/_for_mm/mm_data_r2.json"))
