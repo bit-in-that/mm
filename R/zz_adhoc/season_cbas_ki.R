@@ -57,7 +57,10 @@ af_scores <- af_players_by_round |>
 # af_players <- af_pipelines$players()
 
 player_stats <- player_stats |>
-  filter(status == "CONCLUDED" & round.roundNumber < current_round)
+  filter(status == "CONCLUDED") |>
+  mutate(extendedStats.centreBounceAttendances = replace_na(extendedStats.centreBounceAttendances, 0)) |>
+  mutate(extendedStats.kickins = replace_na(extendedStats.kickins, 0))
+
 
 player_stats_results <- player_stats |>
   left_join(
@@ -119,11 +122,7 @@ results_avg_away <- results_avg_status |>
   select(c("player_id", "AwayAvg"))
 
 player_stats_l3 <- player_stats |>
-  arrange(player.playerId, desc(round.roundNumber)) |>
-  group_by(player.playerId) |>
-  mutate(row_num = row_number()) |>
-  ungroup() |>
-  filter(row_num <= 3)
+  filter(round.roundNumber %in% c(current_round, current_round - 1, current_round -2))
 
 
 # season averages

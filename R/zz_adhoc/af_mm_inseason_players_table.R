@@ -34,6 +34,8 @@ af_players_by_round <- af_pipelines$players_by_round()
 player_stats <- fetch_player_stats_afl(season = 2025, round_number = current_round)
 previous_round <- current_round-1
 
+magic_number <- 9771
+
 
 ### data wrangling to get the weekly/overall price changes ###
 af_players_by_curr_round <- af_players_by_round |>
@@ -109,8 +111,8 @@ seasonplayer_stats <- seasonplayer_stats |>
 seasonplayer_stats_l3 <- seasonplayer_stats_l3 |>
   mutate(player_id = as.integer(gsub("CD_I", "", player_id))) |>
   rename("Last3CBA" = "season_cba",
-         "Last3KI" = "season_ki") |>
-  select(-c("season_tog"))
+         "Last3KI" = "season_ki",
+         "Last3TG" = "season_tog")
 
 
 ownership_numbers <- read_csv(here("data","exports","2025","_for_mm",paste0("af_ownership_r",current_round-1,"_final.csv")))
@@ -163,7 +165,7 @@ players_exp <- players |>
   select(-c("CBA_PERC_1", "KI_PERC_1")) |>
   rename("Price" = "cost",
          "BreakEven" = "break_even") |>
-  mutate(PricedAt = Price/9771) |>
+  mutate(PricedAt = Price/magic_number) |>
   mutate(Position = toupper(position)) |>
   left_join(
     seasonplayer_stats,
@@ -173,8 +175,7 @@ players_exp <- players |>
     seasonplayer_stats_l3,
     by = "player_id"
   ) |>
-  mutate(Last3Score = SeasAvg) |> # adhoc and need to fix up
-  mutate(Last3TG = SeasTG) |>
+  mutate(Last3Score = last_3_avg) |>
   mutate(Last3PPM = Last3Score/Last3TG) |>
   left_join(
     ownership_numbers,
