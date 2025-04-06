@@ -7,7 +7,8 @@ box::use(
   stringr[str_sub],
   httr2[...],
   data.table[fwrite],
-  here[here]
+  here[here],
+  tidyr[replace_na]
 )
 
 box::use(
@@ -57,7 +58,10 @@ af_scores <- af_players_by_round |>
 # af_players <- af_pipelines$players()
 
 player_stats <- player_stats |>
-  filter(status == "CONCLUDED" & round.roundNumber < current_round)
+  filter(status == "CONCLUDED") |>
+  mutate(extendedStats.centreBounceAttendances = replace_na(extendedStats.centreBounceAttendances, 0)) |>
+  mutate(extendedStats.kickins = replace_na(extendedStats.kickins, 0))
+
 
 player_stats_results <- player_stats |>
   left_join(
@@ -77,7 +81,7 @@ results_avg <- af_players_by_round |>
     player_stats_results,
     by = c("player.playerId", "round")
   ) |>
-  filter(round < current_round) |>
+  filter(round <= current_round) |>
   group_by(player_id, result) |>
   summarise(total_score = sum(score),
             number_games = n()) |>
@@ -91,7 +95,7 @@ results_avg_status <- af_players_by_round |>
     player_stats_results,
     by = c("player.playerId", "round")
   ) |>
-  filter(round < current_round) |>
+  filter(round <= current_round) |>
   group_by(player_id, teamStatus) |>
   summarise(total_score = sum(score),
             number_games = n()) |>
@@ -119,11 +123,7 @@ results_avg_away <- results_avg_status |>
   select(c("player_id", "AwayAvg"))
 
 player_stats_l3 <- player_stats |>
-  arrange(player.playerId, desc(round.roundNumber)) |>
-  group_by(player.playerId) |>
-  mutate(row_num = row_number()) |>
-  ungroup() |>
-  filter(row_num <= 3)
+  filter(round.roundNumber %in% c(current_round, current_round - 1, current_round -2))
 
 
 # season averages
@@ -180,10 +180,10 @@ seasonplayer_stats_l3 <- player_stats_l3 |>
 
 
 
-fwrite(seasonplayer_stats, here("data","exports","2025","_for_mm","season",paste0("season_avg_cba_ki_r",current_round,".csv")))
-fwrite(seasonplayer_stats_l3, here("data","exports","2025","_for_mm","last_3",paste0("season_avg_cba_ki_r",current_round,".csv")))
-fwrite(results_avg_win, here("data","exports","2025","_for_mm","last_3",paste0("results_avg_win",current_round,".csv")))
-fwrite(results_avg_loss, here("data","exports","2025","_for_mm","last_3",paste0("results_avg_loss",current_round,".csv")))
-fwrite(results_avg_home, here("data","exports","2025","_for_mm","last_3",paste0("results_avg_home",current_round,".csv")))
-fwrite(results_avg_away, here("data","exports","2025","_for_mm","last_3",paste0("results_avg_away",current_round,".csv")))
+fwrite(seasonplayer_stats, here("data","exports","2025","_for_mm","zz_adhoc",paste0("season_avg_cba_ki_r_",current_round,".csv")))
+fwrite(seasonplayer_stats_l3, here("data","exports","2025","_for_mm","zz_adhoc",paste0("l3_avg_cba_ki_r_",current_round,".csv")))
+fwrite(results_avg_win, here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_win_r_",current_round,".csv")))
+fwrite(results_avg_loss, here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_loss_r_",current_round,".csv")))
+fwrite(results_avg_home, here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_home_r_",current_round,".csv")))
+fwrite(results_avg_away, here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_away_r_",current_round,".csv")))
 
