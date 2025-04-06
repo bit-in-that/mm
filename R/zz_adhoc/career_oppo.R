@@ -15,8 +15,7 @@ box::use(
   ../a1_modules/sc_pipelines
 )
 
-# next_round <- af_pipelines$current_round() +1
-next_round <- 4
+next_round <- af_pipelines$current_round() +1
 
 player_stats_2025 <- fetch_player_stats_afl(season = 2025)
 player_stats_2024 <- fetch_player_stats_afl(season = 2024)
@@ -24,10 +23,13 @@ player_stats_2023 <- fetch_player_stats_afl(season = 2023)
 player_stats_2022 <- fetch_player_stats_afl(season = 2022)
 player_stats_2021 <- fetch_player_stats_afl(season = 2021)
 player_stats_2020 <- fetch_player_stats_afl(season = 2020)
+player_stats_2019 <- fetch_player_stats_afl(season = 2019)
+player_stats_2018 <- fetch_player_stats_afl(season = 2018)
+player_stats_2017 <- fetch_player_stats_afl(season = 2017)
+player_stats_2016 <- fetch_player_stats_afl(season = 2016)
 
 teams <- unique(c(player_stats_2025$team.name))
 df <- data.frame(team = teams)
-
 
 unique_players <- unique(c(player_stats_2025$player.playerId, player_stats_2024$player.playerId, player_stats_2023$player.playerId, player_stats_2022$player.playerId, player_stats_2021$player.playerId, player_stats_2020$player.playerId))
 df_2 <- data.frame(player = unique_players)
@@ -100,12 +102,52 @@ player_stats_2020 <- player_stats_2020  |>
   ungroup()|>
   select(player.playerId, team.name, af, home.team.name, away.team.name, status, round.roundNumber, oppo, season)
 
+
+player_stats_2019 <- player_stats_2019  |>
+  mutate(oppo = if_else(team.name == home.team.name, away.team.name, home.team.name)) |>
+  mutate(season = 2019) |>
+  rowwise() |>
+  mutate(af = 3*kicks+2*handballs+4*tackles+3*marks+hitouts+freesFor-3*freesAgainst+6*goals+behinds) |>
+  ungroup()|>
+  select(player.playerId, team.name, af, home.team.name, away.team.name, status, round.roundNumber, oppo, season)
+
+
+player_stats_2018 <- player_stats_2018  |>
+  mutate(oppo = if_else(team.name == home.team.name, away.team.name, home.team.name)) |>
+  mutate(season = 2018) |>
+  rowwise() |>
+  mutate(af = 3*kicks+2*handballs+4*tackles+3*marks+hitouts+freesFor-3*freesAgainst+6*goals+behinds) |>
+  ungroup()|>
+  select(player.playerId, team.name, af, home.team.name, away.team.name, status, round.roundNumber, oppo, season)
+
+
+player_stats_2017 <- player_stats_2017  |>
+  mutate(oppo = if_else(team.name == home.team.name, away.team.name, home.team.name)) |>
+  mutate(season = 2017) |>
+  rowwise() |>
+  mutate(af = 3*kicks+2*handballs+4*tackles+3*marks+hitouts+freesFor-3*freesAgainst+6*goals+behinds) |>
+  ungroup()|>
+  select(player.playerId, team.name, af, home.team.name, away.team.name, status, round.roundNumber, oppo, season)
+
+
+player_stats_2016 <- player_stats_2016  |>
+  mutate(oppo = if_else(team.name == home.team.name, away.team.name, home.team.name)) |>
+  mutate(season = 2016) |>
+  rowwise() |>
+  mutate(af = 3*kicks+2*handballs+4*tackles+3*marks+hitouts+freesFor-3*freesAgainst+6*goals+behinds) |>
+  ungroup()|>
+  select(player.playerId, team.name, af, home.team.name, away.team.name, status, round.roundNumber, oppo, season)
+
 player_stats <- rbind(player_stats_2025,
                       player_stats_2024,
                       player_stats_2023,
                       player_stats_2022,
                       player_stats_2021,
-                      player_stats_2020)
+                      player_stats_2020,
+                      player_stats_2019,
+                      player_stats_2018,
+                      player_stats_2017,
+                      player_stats_2016)
 
 player_stats <- player_stats |>
   filter(status == "CONCLUDED")
@@ -179,6 +221,6 @@ out_l1 <- df_2 |>
   select("player_id", "oppo_avg")
 
 
-fwrite(out, here("data","exports","2025","_for_mm","season",paste0("oppo_avg_r",current_round,".csv")))
-fwrite(out_l3, here("data","exports","2025","_for_mm","last_3",paste0("oppo_avg_l3_r",current_round,".csv")))
-fwrite(out_l1, here("data","exports","2025","_for_mm","last_3",paste0("oppo_avg_l1_r",current_round,".csv")))
+fwrite(out, here("data","exports","2025","_for_mm","zz_adhoc",paste0("oppo_avg_r_",current_round,".csv")))
+fwrite(out_l3, here("data","exports","2025","_for_mm","zz_adhoc",paste0("oppo_avg_l3_r_",current_round,".csv")))
+fwrite(out_l1, here("data","exports","2025","_for_mm","zz_adhoc",paste0("oppo_avg_l1_r_",current_round,".csv")))

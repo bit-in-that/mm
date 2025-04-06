@@ -70,7 +70,6 @@ sc_ownership <- lineups_top1000 |>
   arrange(desc(OwnershipTop1000)) |>
   select(-player_id)
 
-fwrite(sc_ownership, here("data/exports/2025/_for_mm", paste0("sc_ownership_r", current_round,".csv")))
-
-write_json(sc_ownership, path = here("data/exports/2025/_for_mm", paste0("sc_ownership_r", current_round,".json")))
+fwrite(sc_ownership, here("data", "exports", "2025", "_for_mm", paste0("b_round_0", current_round), paste0("sc_ownership_r_", current_round,".csv")))
+# write_json(sc_ownership, path = here("data", "exports", "2025", "_for_mm", paste0("b_round_", current_round), paste0("sc_ownership_r", current_round,".json")))
 

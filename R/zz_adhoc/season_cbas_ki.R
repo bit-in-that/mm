@@ -7,7 +7,8 @@ box::use(
   stringr[str_sub],
   httr2[...],
   data.table[fwrite],
-  here[here]
+  here[here],
+  tidyr[replace_na]
 )
 
 box::use(
@@ -80,7 +81,7 @@ results_avg <- af_players_by_round |>
     player_stats_results,
     by = c("player.playerId", "round")
   ) |>
-  filter(round < current_round) |>
+  filter(round <= current_round) |>
   group_by(player_id, result) |>
   summarise(total_score = sum(score),
             number_games = n()) |>
@@ -94,7 +95,7 @@ results_avg_status <- af_players_by_round |>
     player_stats_results,
     by = c("player.playerId", "round")
   ) |>
-  filter(round < current_round) |>
+  filter(round <= current_round) |>
   group_by(player_id, teamStatus) |>
   summarise(total_score = sum(score),
             number_games = n()) |>
@@ -179,10 +180,10 @@ seasonplayer_stats_l3 <- player_stats_l3 |>
 
 
 
-fwrite(seasonplayer_stats, here("data","exports","2025","_for_mm","season",paste0("season_avg_cba_ki_r",current_round,".csv")))
-fwrite(seasonplayer_stats_l3, here("data","exports","2025","_for_mm","last_3",paste0("season_avg_cba_ki_r",current_round,".csv")))
-fwrite(results_avg_win, here("data","exports","2025","_for_mm","last_3",paste0("results_avg_win",current_round,".csv")))
-fwrite(results_avg_loss, here("data","exports","2025","_for_mm","last_3",paste0("results_avg_loss",current_round,".csv")))
-fwrite(results_avg_home, here("data","exports","2025","_for_mm","last_3",paste0("results_avg_home",current_round,".csv")))
-fwrite(results_avg_away, here("data","exports","2025","_for_mm","last_3",paste0("results_avg_away",current_round,".csv")))
+fwrite(seasonplayer_stats, here("data","exports","2025","_for_mm","zz_adhoc",paste0("season_avg_cba_ki_r_",current_round,".csv")))
+fwrite(seasonplayer_stats_l3, here("data","exports","2025","_for_mm","zz_adhoc",paste0("l3_avg_cba_ki_r_",current_round,".csv")))
+fwrite(results_avg_win, here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_win_r_",current_round,".csv")))
+fwrite(results_avg_loss, here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_loss_r_",current_round,".csv")))
+fwrite(results_avg_home, here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_home_r_",current_round,".csv")))
+fwrite(results_avg_away, here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_away_r_",current_round,".csv")))
 

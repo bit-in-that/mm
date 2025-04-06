@@ -16,15 +16,25 @@ box::use(
   arrow[write_parquet, read_parquet]
 )
 
+# source from weekly cba's (Used for time on ground, weekly score, cba's and Ki )
+
+# process
+# 1. run Ownership numbers af
+# 2. run Ownership numbers sc
+# 3. run cba's
+# 4. run change without map
+# 5. run this script
+# 6. re-run change script with map
+
+# copy these into a _sent file
+
 # load in template data
 template_data <- read_csv(here('data','received','2025_R2_AF_inseason_player.csv'))
 names <- names(template_data)
 
-
 # load in session id
 load_dot_env() # a .env file doesn't exist, create one with your session ID ("AF_SESSION_ID") in the R folder
 session_id <- Sys.getenv("AF_SESSION_ID")
-
 
 # gather the data
 current_round <- af_pipelines$current_round()
@@ -32,19 +42,18 @@ players <- af_pipelines$players()
 squads <- af_pipelines$squads()
 af_players_by_round <- af_pipelines$players_by_round()
 player_stats <- fetch_player_stats_afl(season = 2025, round_number = current_round)
-previous_round <- current_round-1
 
 magic_number <- 9771
-
+ppm_scaling_factor <- (0.329/0.393)
 
 ### data wrangling to get the weekly/overall price changes ###
 af_players_by_curr_round <- af_players_by_round |>
-  filter(round == current_round) |>
+  filter(round == current_round+1) |>
   select(player_id, price) |>
   rename(curr_price = price)
 
 af_players_by_prev_round <- af_players_by_round |>
-  filter(round == previous_round) |>
+  filter(round == current_round) |>
   select(player_id, price) |>
   rename(prev_price = price)
 
@@ -56,51 +65,25 @@ af_players_price_change <- af_players_by_curr_round |>
   mutate(price_change = curr_price - prev_price) |>
   select("player_id", "price_change")
 
+######################## FIX FIX FIX FIX FIX #########################
 
-# source from weekly cba's (Used for time on ground, weekly score, cba's and Ki )
-mm_cba <- read_csv(here("data","exports","2025","_for_mm",paste0("round_",previous_round),paste0("cba_r",previous_round,".csv")))
-mm_cba_prev <- read_csv(here("data","exports","2025","_for_mm",paste0("round_",previous_round-1),paste0("cba_r",previous_round-1,".csv")))
+mm_cba <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_0",current_round),paste0("cba_r_",current_round,"_final.csv")))
 
 mm_merge <- mm_cba |>
   mutate(playerId = as.integer(gsub("CD_I", "", playerId))) |>
-  select("playerId", "TOG", "AF", "CBA_PERC", "KI_PERC") |>
-  rename("player_id" = "playerId")
-
-mm_merge_prev <- mm_cba_prev |>
-  mutate(playerId = as.integer(gsub("CD_I", "", playerId))) |>
-  select("playerId", "CBA_PERC", "KI_PERC") |>
+  select("playerId", "TOG", "AF", "CBA_PERC", "KI_PERC", "CBA_PERC_chg", "KI_PERC_chg") |>
   rename("player_id" = "playerId",
-         "CBA_PERC_1" = "CBA_PERC",
-         "KI_PERC_1" = "KI_PERC")
-
-
-diff_with_na <- function(x, y) {
-  if(is.na(x) && is.na(y)) return(0)
-  if(is.na(x)) return(-y)
-  if(is.na(y)) return(x)
-  return(x - y)
-}
-
-mm_merge |>
-  left_join(
-    mm_merge_prev,
-    by = "player_id"
-  ) |>
-  rowwise() |>
-  mutate(CBAchg = diff_with_na(CBA_PERC, CBA_PERC_1)) |>
-  mutate(KIchg = diff_with_na(KI_PERC, KI_PERC_1)) |>
-  ungroup() |>
-  select("player_id", "TOG", "AF", "CBA_PERC", "KI_PERC",
-         "CBAchg", "KIchg")
+         "CBAchg" = "CBA_PERC_chg",
+         "KIchg" = "KI_PERC_chg")
 
 ## read in more mapping tables
 
-seasonplayer_stats <- read_csv(here("data","exports","2025","_for_mm","season",paste0("season_avg_cba_ki_r",current_round,".csv")))
-seasonplayer_stats_l3 <- read_csv(here("data","exports","2025","_for_mm","last_3",paste0("season_avg_cba_ki_r",current_round,".csv")))
-results_avg_win <- read_csv(here("data","exports","2025","_for_mm","last_3",paste0("results_avg_win",current_round,".csv")))
-results_avg_loss <- read_csv(here("data","exports","2025","_for_mm","last_3",paste0("results_avg_loss",current_round,".csv")))
-results_avg_home <- read_csv(here("data","exports","2025","_for_mm","last_3",paste0("results_avg_home",current_round,".csv")))
-results_avg_away <- read_csv(here("data","exports","2025","_for_mm","last_3",paste0("results_avg_away",current_round,".csv")))
+seasonplayer_stats <- read_csv(here("data","exports","2025","_for_mm","zz_adhoc",paste0("season_avg_cba_ki_r_",current_round,".csv")))
+seasonplayer_stats_l3 <- read_csv(here("data","exports","2025","_for_mm","zz_adhoc",paste0("l3_avg_cba_ki_r_",current_round,".csv")))
+results_avg_win <- read_csv(here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_win_r_",current_round,".csv")))
+results_avg_loss <- read_csv(here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_loss_r_",current_round,".csv")))
+results_avg_home <- read_csv(here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_home_r_",current_round,".csv")))
+results_avg_away <- read_csv(here("data","exports","2025","_for_mm","zz_adhoc",paste0("results_avg_away_r_",current_round,".csv")))
 
 seasonplayer_stats <- seasonplayer_stats |>
   mutate(player_id = as.integer(gsub("CD_I", "", player_id))) |>
@@ -114,13 +97,11 @@ seasonplayer_stats_l3 <- seasonplayer_stats_l3 |>
          "Last3KI" = "season_ki",
          "Last3TG" = "season_tog")
 
+ownership_numbers <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_0", current_round),paste0("af_ownership_r_",current_round,"_final.csv")))
 
-ownership_numbers <- read_csv(here("data","exports","2025","_for_mm",paste0("af_ownership_r",current_round-1,"_final.csv")))
-
-
-oppo_avg <- read_csv(here("data","exports","2025","_for_mm","season",paste0("oppo_avg_r",current_round,".csv")))
-oppo_avg_l3 <- read_csv(here("data","exports","2025","_for_mm","last_3",paste0("oppo_avg_l3_r",current_round,".csv")))
-oppo_avg_l1 <- read_csv(here("data","exports","2025","_for_mm","last_3",paste0("oppo_avg_l1_r",current_round,".csv")))
+oppo_avg <- read_csv(here("data","exports","2025","_for_mm","zz_adhoc",paste0("oppo_avg_r_",current_round,".csv")))
+oppo_avg_l3 <- read_csv(here("data","exports","2025","_for_mm","zz_adhoc",paste0("oppo_avg_l3_r_",current_round,".csv")))
+oppo_avg_l1 <- read_csv(here("data","exports","2025","_for_mm","zz_adhoc",paste0("oppo_avg_l1_r_",current_round,".csv")))
 
 oppo_avg <- oppo_avg |>
   mutate(player_id = as.integer(gsub("CD_I", "", player_id))) |>
@@ -133,7 +114,6 @@ oppo_avg_l3 <- oppo_avg_l3 |>
 oppo_avg_l1 <- oppo_avg_l1 |>
   mutate(player_id = as.integer(gsub("CD_I", "", player_id))) |>
   rename("OppLastScore" = "oppo_avg")
-
 
 # merge everything onto players
 players_exp <- players |>
@@ -150,19 +130,10 @@ players_exp <- players |>
     mm_merge,
     by = "player_id"
   ) |>
-  left_join(
-    mm_merge_prev,
-    by = "player_id"
-  ) |>
-  mutate(LastPPM = AF/TOG) |>
+  mutate(LastPPM = (AF/TOG)*ppm_scaling_factor) |>
   mutate(SeasAvg = total_points/games_played) |>
   rename(SeasTG = tog) |>
-  mutate(SeasPPM = SeasAvg/SeasTG) |>
-  rowwise() |>
-  mutate(CBAchg = diff_with_na(CBA_PERC, CBA_PERC_1)) |>
-  mutate(KIchg = diff_with_na(KI_PERC, KI_PERC_1)) |>
-  ungroup() |>
-  select(-c("CBA_PERC_1", "KI_PERC_1")) |>
+  mutate(SeasPPM = (SeasAvg/SeasTG)*ppm_scaling_factor) |>
   rename("Price" = "cost",
          "BreakEven" = "break_even") |>
   mutate(PricedAt = Price/magic_number) |>
@@ -176,7 +147,7 @@ players_exp <- players |>
     by = "player_id"
   ) |>
   mutate(Last3Score = last_3_avg) |>
-  mutate(Last3PPM = Last3Score/Last3TG) |>
+  mutate(Last3PPM = (Last3Score/Last3TG)*ppm_scaling_factor) |>
   left_join(
     ownership_numbers,
     by = c("Player", "Team")
@@ -202,6 +173,7 @@ players_exp <- players |>
   left_join(
     oppo_avg_l1, by = "player_id"
   ) |>
+  mutate(SeasTG = if_else(SeasAvg == 0, 0, SeasTG)) |>
   mutate(ReservesAvg = 0) |>
   mutate(ReservesLast = 0) |>
   select(Player, Team, Position, Price, PriceChg = price_change,
@@ -218,5 +190,5 @@ players_exp <- players |>
 
 check <- all(names(players_exp) == names)
 
-fwrite(players_exp, here("data","exports","2025","_for_mm",paste0("2025_R",current_round-1,"_AF_inseason_player.csv")))
+fwrite(players_exp, here("data","exports","2025","_for_mm",paste0("b_round_0", current_round), paste0("2025_r_",current_round,"_AF_inseason_player.csv")))
 

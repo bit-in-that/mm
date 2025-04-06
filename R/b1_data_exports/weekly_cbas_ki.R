@@ -15,7 +15,7 @@ box::use(
   ../a1_modules/sc_pipelines
 )
 
-current_round <- 2
+current_round <- af_pipelines$current_round()
 player_stats <- fetch_player_stats_afl(season = 2025, round_number = current_round)
 
 af_players_by_round <- af_pipelines$players_by_round()
@@ -89,5 +89,4 @@ mm_cba <- player_stats |>
   )
 
 
-fwrite(mm_cba, here("data","exports","2025","_for_mm",paste0("round_",current_round),paste0("cba_r",current_round,".csv")))
-
+fwrite(mm_cba, here("data","exports","2025","_for_mm",paste0("b_round_0",current_round),paste0("cba_r_",current_round,".csv")))
