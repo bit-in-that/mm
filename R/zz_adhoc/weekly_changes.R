@@ -132,12 +132,12 @@ data <- data |>
 
 data <- as.data.table(data)
 
-# data <- merge(data, map, by.x = "name", by.y = "af_name", all.x = T)
-# data[, name := ifelse(is.na(mm_name),name,mm_name)]
-# data[, mm_name := NULL]
+data <- merge(data, map, by.x = "name", by.y = "af_name", all.x = T)
+data[, name := ifelse(is.na(mm_name),name,mm_name)]
+data[, mm_name := NULL]
 
 setnames(data, names(data), gsub(".x","",names(data)))
-fwrite(data, here("data","exports","2025","_for_mm",paste0("b_round_0", current_round), paste0("cba_r_", current_round,"_final.csv")))
+fwrite(data, here("data","exports","2025","_for_mm",paste0("b_round_0", current_round), paste0("cba_for_sc_r_", current_round,"_final_mm.csv")))
 # write_json(data, here("data","exports","2025","_for_mm",paste0("b_round_0", current_round), paste0("cba_r_", current_round,"_final.json")))
 
 
