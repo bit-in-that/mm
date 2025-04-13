@@ -23,12 +23,17 @@ box::use(
 # define season
 season <- 2025
 current_round <- af_pipelines$current_round()
+# current_round <- 5
 
 # read in previous
 data_prev <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_0", current_round-1),paste0("master_table_r_",current_round-1,".csv")))
 data_curr <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_0",current_round),paste0("mm_master_table_r_",current_round,".csv")))
 
 master_table <- rbind(data_curr, data_prev)
+
+master_table <- master_table |>
+  mutate(Opposition = if_else(Opposition == "Adelaide", "Adelaide Crows",
+                              if_else(Opposition == "Gold Coast Suns", "Gold Coast SUNS", Opposition)))
 
 current_season <- max(master_table$Season)
 current_round <- max(master_table |>
@@ -502,7 +507,7 @@ af_big_table <- function(current_season, current_round){
   # Filter for current round data
   current_round_data <- master_table |>
     filter(Season == current_season, Round == current_round) |>
-    select(player_id, Player, Team = team.name, Position,
+    select(player_id, Player, Team, Position,
            Price = af_cost, PricedAt = af_priced_at, BreakEven = af_be,
            LastScore = AF, LastTG = TOG, minutes_played,
            LastCBA = CBA_PERC, LastKI = KI_PERC,
@@ -722,7 +727,7 @@ sc_big_table <- function(current_season, current_round){
   # Filter for current round data
   current_round_data <- master_table |>
     filter(Season == current_season, Round == current_round) |>
-    select(player_id, Player, Team = team.name, Position,
+    select(player_id, Player, Team, Position,
            Price = sc_cost, PricedAt = sc_priced_at, BreakEven = sc_be,
            LastScore = SC, LastTG = TOG, minutes_played,
            LastCBA = CBA_PERC, LastKI = KI_PERC,
