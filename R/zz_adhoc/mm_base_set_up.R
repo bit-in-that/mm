@@ -32,6 +32,7 @@ sc_ownership <- sc_ownership_top1000$sc_own()
 mm_cba <- weekly_cbas_ki$cba_ki()
 af_magic_number <- magic_number$af_magic_number(c_round = current_round)
 sc_magic_number <- magic_number$sc_magic_number(c_round = current_round)
+# sc_magic_number <- 5177.453
 
 # adhoc changes (monitor throughout the season with Mid season draft)
 adhoc_changes_id <- read_excel(here("data","inputs","adhoc_changes.xlsx"), sheet = "player_id")
@@ -86,7 +87,8 @@ base_plus <- base_structure |>
     sc_priced_at = sc_cost/sc_magic_number) |>
   mutate(minutes_played = if_else(is.na(AF),NA,minutes_played),
          SC = if_else(is.na(AF),NA,SC)) |>
-  mutate(oppo = if_else(team.name == home.team.name,away.team.name,home.team.name)) |>
+  mutate(Opposition = if_else(team.name == home.team.name,away.team.name,home.team.name)) |>
+  mutate(home_status = if_else(team.name == home.team.name, "home", "away")) |>
   select(-c(away.team.name,home.team.name))
 
-fwrite(base_plus, here("data","exports","2025","_for_mm","b_round_04",paste0("mm_master_table_r_4.csv")))
+fwrite(base_plus, here("data","exports","2025","_for_mm",paste0("b_round_0",current_round),paste0("mm_master_table_r_",current_round,".csv")))

@@ -23,8 +23,7 @@ cba_ki <- function() {
 
   player_stats <- fetch_player_stats_afl(season = season, round_number = current_round)
   af_players_by_round <- af_pipelines$players_by_round()
-  sc_players_stats <- sc_pipelines$players_stats()|>
-    filter(round == current_round)
+  sc_players_stats <- sc_pipelines$players_stats(round = current_round)
   sc_players_id <- sc_pipelines$players() |>
     transmute(player_id, feed_id, Player = paste(first_name, last_name), Team = team_abbrev)
 
@@ -55,7 +54,7 @@ cba_ki <- function() {
     mutate(extendedStats.centreBounceAttendances = replace_na(extendedStats.centreBounceAttendances, 0)) |>
     mutate(extendedStats.kickins = replace_na(extendedStats.kickins, 0))
 
-  results_stats <- fetch_results_afl(season = 2025, round = 4)
+  results_stats <- fetch_results_afl(season = 2025, round = current_round)
 
   results_stats <- results_stats |>
     rowwise() |>

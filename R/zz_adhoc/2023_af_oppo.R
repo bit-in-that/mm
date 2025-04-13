@@ -4,8 +4,10 @@ box::use(
 box::use(
   dotenv[load_dot_env],
   here[here],
+  fitzRoy[fetch_player_stats_footywire],
   dplyr[...],
   purrr[...],
+  stringr[...],
   data.table[fwrite],
   jsonlite[write_json],
   arrow[write_parquet, read_parquet],
@@ -116,12 +118,13 @@ data_collection <- function(season){
   return(result)
 }
 
+
 vector <- c(2018:2024)
-data <- vector |>
+data_afl <- vector |>
   map(data_collection) |>
   list_rbind()
 
-af_players <- af_pipelines$players()
+
 
 export <- data |>
   filter(player_id %in% c(af_players$player_id)) |>
@@ -137,5 +140,119 @@ export <- data |>
          )
 
 
+
+
+vector_1 <- c(2025)
+vector_2 <- c(2014:2024)
+input <- vector_2 |>
+  map(fetch_player_stats_footywire) |>
+  list_rbind()
+
+input_2025 <- vector_1 |>
+  map(fetch_player_stats_footywire) |>
+  list_rbind()
+
+
+data_2025 <- input_2025 |>
+  mutate(round_num = as.numeric(stringr::str_replace(Round, "Round ",""))) |>
+  filter(round_num <= 3) |>
+  select(-round_num)
+
+output <- rbind(data_2025, input)
+
+data <- output |>
+  select(Season,
+         Round,
+         Player,
+         Venue,
+         Opposition,
+         AF,
+         SC) |>
+  mutate(Player = str_remove(Player, "  ↗|  ↙")) |>
+  mutate(Round = as.numeric(stringr::str_replace(Round, "Round ",""))) |>
+  filter(!(is.na(Round)))
+
+joined <- data |>
+  left_join(
+    data_afl,
+    by = c("Round" = "round",
+           "AF" = "score",
+           "Season" = "season")
+  )
+
+# Step 2: Count how many times each player_id is matched to each Player
+id_counts <- joined |>
+  group_by(Player, player_id) |>
+  summarise(match_count = n(), .groups = "drop")
+
+# Step 3: Select the most frequent player_id per Player
+best_matches <- id_counts |>
+  group_by(Player) |>
+  slice_max(order_by = match_count, n = 1, with_ties = FALSE)
+
+af_players <- af_pipelines$players()
+af_players <- af_players |>
+  mutate(af_name = paste0(first_name, " ", last_name)) |>
+  select(player_id, af_name)
+
+best_matches <- best_matches |>
+  left_join(af_players, by = "player_id") |>
+  filter(Player == af_name | match_count > 2) |>
+  filter(!is.na(player_id) & !is.na(af_name)) |>
+  select(Player, player_id)
+
+# Step 4: Join back to original data to add player_id
+final <- data |>
+  left_join(best_matches, by = "Player")
+
+
+mt <- final |>
+  filter(!(is.na(player_id)))
+
+out <- mt |>
+  transmute(Season,
+            Round,
+            player_id,
+            Player,
+            squad_id="",
+            Team="",
+            Position="",
+            af_cost=0,
+            af_be=0,
+            sc_cost=0,
+            minutes_played=0,
+            SC,
+            AF,
+            matchId=0,
+            TOG=0,
+            CBA=0,
+            KI=0,
+            CBA_PERC=0,
+            KI_PERC=0,
+            TeamCBA=0,
+            TeamKI=0,
+            team.name="",
+            venue.name=Venue,
+            result="",
+            sc_be=0,
+            sc_OwnershipTotal=0,
+            sc_OwnershipTop1000=0,
+            sc_OwnershipTop100=0,
+            sc_OwnershipTop10=0,
+            af_OwnershipTotal=0,
+            af_OwnershipTop1000=0,
+            af_OwnershipTop100=0,
+            af_OwnershipTop10=0,
+            af_magic_number=0,
+            sc_magic_number=0,
+            af_priced_at=0,
+            sc_priced_at=0,
+            Opposition,
+            ) |>
+  arrange(desc(Season), desc(Round))
+
+
+
+fwrite(out, here("data","exports","2025","_for_mm","b_round_04",paste0("mm_master_table_r_3_hist.csv")))
 
 

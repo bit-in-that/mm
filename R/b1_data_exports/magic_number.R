@@ -60,11 +60,11 @@ af_magic_number <- function(c_round) {
 #' @export
 sc_magic_number <- function(c_round) {
 
+  # c_round <- 5
+
   sc_magic_number_r0 <- 5387.372
 
-  data <- 1:c_round |>
-    map(\(r) sc_pipelines$players_stats(round = r)) |>
-    list_rbind()
+  data <- sc_pipelines$players_stats(round = c_round)
 
   data <- data |>
     mutate(season_avg = total_points/total_games) |>
