@@ -16,10 +16,7 @@ box::use(
 )
 
 #' @export
-cba_ki <- function() {
-
-  season <- 2025
-  current_round <- af_pipelines$current_round()
+cba_ki <- function(current_round, season) {
 
   player_stats <- fetch_player_stats_afl(season = season, round_number = current_round)
   af_players_by_round <- af_pipelines$players_by_round()

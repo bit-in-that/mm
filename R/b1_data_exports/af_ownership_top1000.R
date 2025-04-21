@@ -6,6 +6,7 @@ box::use(
   here[here],
   dplyr[...],
   purrr[...],
+  readxl[read_excel],
   data.table[fwrite]
 )
 
@@ -19,6 +20,18 @@ af_own <- function() {
   rankings <- af_pipelines$rankings(session_id, order = "rank", order_direction = "ASC")
   players <- af_pipelines$players()
   squads <- af_pipelines$squads()
+
+  adhoc_changes_id <- read_excel(here("data","inputs","adhoc_changes.xlsx"), sheet = "player_id")
+
+  players <- players |>
+    mutate(player_id = paste0("CD_I", player_id)) |>
+    left_join(adhoc_changes_id |>
+                select(-Name),
+              by = "player_id") |>
+    mutate(player_id = if_else(is.na(player.playerId), player_id, player.playerId)) |>
+    select(-c(player.playerId)) |>
+    mutate(player_id = as.integer(sub("^CD_I", "", player_id)))
+
 
   lineups_top1000 <- rankings |>
     filter(rank %in% 1:1000) |>

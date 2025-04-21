@@ -48,7 +48,7 @@ sc_own <- function() {
     sc_pipelines$team_lineups(access_token = access_token)
 
   sc_ownership <- lineups_top1000 |>
-    # bind_rows(lineups_leftover) |>
+    bind_rows(lineups_leftover) |>
     left_join(
       rankings |> select(team_id, raw_position),
       by = c("user_team_id" = "team_id")
