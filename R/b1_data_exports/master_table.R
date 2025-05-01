@@ -22,17 +22,32 @@ box::use(
   DBI[dbConnect, dbWriteTable, dbExecute, dbGetQuery]
 )
 
+db_host <- "ls-7189a7c3f9e8e50019ede4ba0e86c98674eaf21a.czyw0iuiknog.ap-southeast-2.rds.amazonaws.com"
+db_name <- "mm_data"
+db_user <- "dbmasteruser"
+db_password <- Sys.getenv("sql_password")
+db_port <- 3306  # Default MySQL port
+
+con <- dbConnect(
+  RMySQL::MySQL(),
+  host = db_host,
+  dbname = db_name,
+  user = db_user,
+  password = db_password,
+  port = db_port
+)
+
 # define season
 season <- 2025
 current_round <- af_pipelines$current_round()
 # current_round <- 5
 
 # read in previous
-data_prev <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_0", current_round-1),paste0("master_table_r_",current_round-1,".csv")))
+data_prev <- dbGetQuery(con, paste0("SELECT * FROM master_table"))
 data_curr <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_0",current_round),paste0("mm_master_table_r_",current_round,".csv")))
 
 data_prev <- data_prev |>
-  # select(-c("next_opp")) |>
+  select(-c("next_opp")) |>
   left_join(data_curr |> select(player_id, next_opp),
             by = "player_id")
 
@@ -624,6 +639,7 @@ af_big_table <- function(current_season, current_round){
 
   # 4. Last 3 Game Averages
   last3 <- master_table |>
+    filter(Season == current_season) |>
     filter(!is.na(AF), !is.na(minutes_played)) |>
     arrange(player_id, desc(Season), desc(Round)) |>
     group_by(player_id) |>
@@ -818,6 +834,7 @@ sc_big_table <- function(current_season, current_round){
 
   # 4. Last 3 Game Averages
   last3 <- master_table |>
+    filter(Season == current_season) |>
     filter(!is.na(SC), !is.na(minutes_played)) |>
     arrange(player_id, desc(Season), desc(Round)) |>
     group_by(player_id) |>
@@ -886,7 +903,6 @@ sc_big_table <- function(current_season, current_round){
 
 }
 
-
 af_pp <- af_price_projector(current_season = current_season, current_round = current_round)
 sc_pp <- sc_price_projector(current_season = current_season, current_round = current_round)
 
@@ -923,10 +939,10 @@ cba_data <- master_table |>
 
 
 cba_data <- cba_data |>
-  filter(season == 2025 & roundNumber == 6)
+  filter(season == season & roundNumber == current_round)
 
 
-data_prev_cba <- read_csv(here("data","exports","2025","_for_mm","zz_adhoc",paste0("2021_2025_r_5_cba_ki.csv")))
+data_prev_cba <- dbGetQuery(con, paste0("SELECT * FROM cba"))
 
 cba_data <- cba_data |>
   select(all_of(names(data_prev_cba)))
@@ -936,38 +952,252 @@ cba_out <- rbind(cba_data, data_prev_cba)
 
 # data_export
 
-db_host <- "ls-7189a7c3f9e8e50019ede4ba0e86c98674eaf21a.czyw0iuiknog.ap-southeast-2.rds.amazonaws.com"
-db_name <- "mm_data"
-db_user <- "dbmasteruser"
-db_password <- Sys.getenv("sql_password")
-db_port <- 3306  # Default MySQL port
+# # Find the maximum length
+# max_len <- max(lengths(list(
+#   names(master_table),
+#   names(af_big_table),
+#   names(sc_big_table),
+#   names(af_pp),
+#   names(sc_pp),
+#   names(af_team),
+#   names(sc_team),
+#   names(cba_out)
+# )))
+#
+# # Function to pad each vector
+# pad_vec <- function(x, len) {
+#   c(x, rep(NA, len - length(x)))
+# }
+#
+# # Create the data.frame
+# names_dt <- data.frame(
+#   master = pad_vec(names(master_table), max_len),
+#   player_af = pad_vec(names(af_big_table), max_len),
+#   player_sc = pad_vec(names(sc_big_table), max_len),
+#   proj_af = pad_vec(names(af_pp), max_len),
+#   proj_sc = pad_vec(names(sc_pp), max_len),
+#   team_af = pad_vec(names(af_team), max_len),
+#   team_sc = pad_vec(names(sc_team), max_len),
+#   cba = pad_vec(names(cba_out), max_len),
+#   stringsAsFactors = FALSE
+# )
+#
+#
+# fwrite(names_dt, here("data","exports","2025","_for_mm","zz_adhoc",paste0("table_names.csv")))
 
-con <- dbConnect(
-  RMySQL::MySQL(),
-  host = db_host,
-  dbname = db_name,
-  user = db_user,
-  password = db_password,
-  port = db_port
-)
-
-dbWriteTable(con, name = "playerAF", value = af_big_table, row.names = FALSE, overwrite = TRUE)
-dbWriteTable(con, name = "playerSC", value = sc_big_table, row.names = FALSE, overwrite = TRUE)
-dbWriteTable(con, name = "projectorAF", value = af_pp, row.names = FALSE, overwrite = TRUE)
-dbWriteTable(con, name = "projectorSC", value = sc_pp, row.names = FALSE, overwrite = TRUE)
-dbWriteTable(con, name = "teamStatsAF", value = af_team, row.names = FALSE, overwrite = TRUE)
-dbWriteTable(con, name = "teamStatsSC", value = sc_team, row.names = FALSE, overwrite = TRUE)
-dbWriteTable(con, name = "cba", value = cba_out, row.names = FALSE, overwrite = TRUE)
+# dbWriteTable(con, name = "master_table", value = master_table, row.names = FALSE, overwrite = TRUE)
+# dbExecute(con, "DROP TABLE master_table")
+# dbExecute(con, "DROP TABLE playerAF")
+# dbExecute(con, "DROP TABLE playerSC")
+# dbExecute(con, "DROP TABLE projectorSC")
+# dbExecute(con, "DROP TABLE teamStatsAF")
+# dbExecute(con, "DROP TABLE teamStatsSC")
+# dbExecute(con, "DROP TABLE cba")
 
 
+dbWriteTable(con, name = "master_table", value = master_table, row.names = FALSE,
+             field.types = c(
+               Season = "INT",
+               Round = "INT",
+               player_id = "VARCHAR(255)",
+               Player = "VARCHAR(255)",
+               squad_id = "INT",
+               Team = "VARCHAR(10)",
+               Position = "VARCHAR(10)",
+               af_cost = "INT",
+               sc_cost = "INT",
+               minutes_played = "INT",
+               SC = "INT",
+               AF = "INT",
+               matchId = "VARCHAR(255)",
+               TOG = "INT",
+               CBA = "INT",
+               KI = "INT",
+               CBA_PERC = "INT",
+               KI_PERC = "INT",
+               TeamCBA = "INT",
+               TeamKI = "INT",
+               team.name = "VARCHAR(255)",
+               venue.name = "VARCHAR(255)",
+               result = "VARCHAR(255)",
+               sc_OwnershipTotal = "INT",
+               sc_OwnershipTop1000 = "INT",
+               sc_OwnershipTop100 = "INT",
+               sc_OwnershipTop10 = "INT",
+               af_OwnershipTotal = "INT",
+               af_OwnershipTop1000 = "INT",
+               af_OwnershipTop100 = "INT",
+               af_OwnershipTop10 = "INT",
+               af_magic_number = "INT",
+               af_be = "INT",
+               sc_magic_number = "INT",
+               sc_be = "INT",
+               next_opp = "VARCHAR(255)",
+               af_priced_at = "INT",
+               sc_priced_at = "INT",
+               Opposition = "VARCHAR(255)",
+               home_status = "VARCHAR(255)"
+             ))
 
+dbWriteTable(con, name = "playerStatsAF", value = af_big_table, row.names = FALSE,
+             field.types = c(
+               Player = "VARCHAR(255)",
+               Team = "VARCHAR(10)",
+               Position = "VARCHAR(10)",
+               Price = "INT",
+               SeasonPriceChange = "INT",
+               PriceChg = "INT",
+               PricedAt = "INT",
+               BreakEven = "INT",
+               LastScore = "INT",
+               LastTG = "INT",
+               LastPPM = "INT",
+               LastCBA = "INT",
+               CBAchg = "INT",
+               LastKI = "INT",
+               KIchg = "INT",
+               SeasAvg = "INT",
+               SeasTG = "INT",
+               SeasPPM = "INT",
+               SeasCBA = "INT",
+               SeasKI = "INT",
+               Last3Score = "INT",
+               Last3TG = "INT",
+               Last3PPM = "INT",
+               Last3CBA = "INT",
+               Last3KI = "INT",
+               OwnershipTotal = "INT",
+               OwnershipTop1000 = "INT",
+               OwnershipTop100 = "INT",
+               OwnershipTop10 = "INT",
+               OwnershipTop1000Chg = "INT",
+               OwnershipTop100Chg = "INT",
+               OwnershipTop10Chg = "INT",
+               WinAvg = "INT",
+               LossAvg = "INT",
+               HomeAvg = "INT",
+               AwayAvg = "INT",
+               OppLastScore = "INT",
+               OppLast3Score = "INT",
+               OppCareer = "INT",
+               ReservesAvg = "INT",
+               ReservesLast = "INT"
+             ))
 
+dbWriteTable(con, name = "playerStatsSC", value = sc_big_table, row.names = FALSE,
+             field.types = c(
+               Player = "VARCHAR(255)",
+               Team = "VARCHAR(10)",
+               Position = "VARCHAR(10)",
+               Price = "INT",
+               SeasonPriceChange = "INT",
+               PriceChg = "INT",
+               PricedAt = "INT",
+               BreakEven = "INT",
+               LastScore = "INT",
+               LastTG = "INT",
+               LastPPM = "INT",
+               LastCBA = "INT",
+               CBAchg = "INT",
+               LastKI = "INT",
+               KIchg = "INT",
+               SeasAvg = "INT",
+               SeasTG = "INT",
+               SeasPPM = "INT",
+               SeasCBA = "INT",
+               SeasKI = "INT",
+               Last3Score = "INT",
+               Last3TG = "INT",
+               Last3PPM = "INT",
+               Last3CBA = "INT",
+               Last3KI = "INT",
+               OwnershipTotal = "INT",
+               OwnershipTop1000 = "INT",
+               OwnershipTop100 = "INT",
+               OwnershipTop10 = "INT",
+               OwnershipTop1000Chg = "INT",
+               OwnershipTop100Chg = "INT",
+               OwnershipTop10Chg = "INT",
+               WinAvg = "INT",
+               LossAvg = "INT",
+               HomeAvg = "INT",
+               AwayAvg = "INT",
+               OppLastScore = "INT",
+               OppLast3Score = "INT",
+               OppCareer = "INT",
+               ReservesAvg = "INT",
+               ReservesLast = "INT"
+             ))
 
+dbWriteTable(con, name = "teamStatsAF", value = af_team, row.names = FALSE,
+             field.types = c(
+               Team = "VARCHAR(255)",
+               Icon = "VARCHAR(10)",
+               Last = "INT",
+               LastOpp = "INT",
+               Season = "INT",
+               SeasonOpp = "INT",
+               Last3 = "INT",
+               Last3Opp = "INT",
+               Top3Mid = "INT",
+               Top3OppMid = "INT",
+               TopRuc = "INT",
+               TopOppRuc = "INT",
+               Top2Def = "INT",
+               Top2OppDef = "INT",
+               Top2For = "INT",
+               Top2OppFor = "INT"
+             ))
 
+dbWriteTable(con, name = "teamStatsSC", value = sc_team, row.names = FALSE,
+             field.types = c(
+               Team = "VARCHAR(255)",
+               Icon = "VARCHAR(10)",
+               Last = "INT",
+               LastOpp = "INT",
+               Season = "INT",
+               SeasonOpp = "INT",
+               Last3 = "INT",
+               Last3Opp = "INT",
+               Top3Mid = "INT",
+               Top3OppMid = "INT",
+               TopRuc = "INT",
+               TopOppRuc = "INT",
+               Top2Def = "INT",
+               Top2OppDef = "INT",
+               Top2For = "INT",
+               Top2OppFor = "INT"
+             ))
 
+dbWriteTable(con, name = "cba", value = cba_out, row.names = FALSE,
+             field.types = c(
+               Season = "INT",
+               roundNumber = "INT",
+               matchId = "VARCHAR(255)",
+               playerId = "VARCHAR(255)",
+               name = "VARCHAR(255)",
+               TOG = "INT",
+               AF = "INT",
+               CBA = "INT",
+               KI = "INT",
+               teamName = "VARCHAR(255)",
+               CBA_PERC = "INT",
+               KI_PERC = "INT",
+               SC = "INT",
+               TeamCBA = "INT",
+               TeamKI = "INT"
+             ))
 
+dbGetQuery(con, "SELECT * FROM cba") |> nrow()
 
-
+# dbWriteTable(con, name = "projectorAF", value = af_pp, row.names = FALSE, overwrite = TRUE,
+#              field.types = c(
+#
+#              ))
+# dbWriteTable(con, name = "projectorSC", value = sc_pp, row.names = FALSE, overwrite = TRUE,
+#              field.types = c(
+#
+#              ))
 
 
 
