@@ -1,4 +1,3 @@
-
 box::use(
   dotenv[load_dot_env],
   RMySQL[MySQL],
@@ -23,7 +22,7 @@ con <- dbConnect(
 )
 
 
-data <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_0",current_round),paste0("mm_master_table_r_",current_round,".csv")))
+data <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_",sprintf("%02d", current_round)),paste0("mm_master_table_r_",current_round,".csv")))
 
 
 
