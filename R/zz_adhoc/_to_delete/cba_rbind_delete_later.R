@@ -47,6 +47,61 @@ squads <- readRDS(here("data","exports","MT_plane_downloads", paste0("squads.rds
 
 
 
+
+
+# price change r0
+
+
+sc_data
+
+
+af_data <- af_data |>
+  select(player_id, price, round) |>
+  mutate(player_id = paste0("CD_I",player_id))
+
+
+af_data_6 <- af_data |>
+  filter(round == 6)
+af_data_1 <- af_data |>
+  filter(round == 1)
+
+
+data_af <- af_data_6 |>
+  left_join(af_data_1,
+            by = "player_id")
+
+
+data_af <- data_af |>
+  mutate(SeasonPriceChange = price.x - price.y) |>
+  select(player_id, SeasonPriceChange)
+
+
+output <- data_af |>
+  left_join(sc_data,
+            by = "player_id")
+
+
+out <- players |>
+  mutate(Player = paste0(first_name, " ", last_name)) |>
+  select(Player, player_id) |>
+  mutate(player_id = paste0("CD_I",player_id)) |>
+  left_join(output,
+            by = "player_id")
+
+fwrite(out, here("data","exports","2025","_for_mm","zz_adhoc",paste0("season_chg.csv")))
+
+
+
+
+
+
+
+
+
+
+
+
+
 player_stats_afl_2012_to_2024 <- 2012:2024 |> map(fetch_player_stats_afl) |> list_rbind()
 saveRDS(player_stats_afl_2012_to_2024, here("data","exports","MT_plane_downloads", paste0("player_stats_afl_2012_to_2024.rds")))
 

@@ -24,6 +24,13 @@ player_stats <- function(resp_body_players) {
     bind_rows()
 }
 
+#' @export
+player_stats_prev <- function(resp_body_players) {
+  resp_body_players |>
+    map(clean_player_stats_prev) |>
+    bind_rows()
+}
+
 clean_player <- function(player) {
   team <- player$team
 
@@ -57,10 +64,23 @@ clean_player_stats <- function(player) {
     list_rbind()
 }
 
+clean_player_stats_prev <- function(player) {
+  player$player_stats |>
+    map(clean_player_stats_single_prev) |>
+    list_rbind()
+}
+
 clean_player_stats_single <- function(player_stats) {
 
   player_stats[c("player_id", "round", "points", "price", "total_points", "position", "games", "total_games", "price_change", "total_price_change", "last_position", "round_position", "minutes_played", "total_minutes_played", "updated_at", "kicks", "total_kicks", "handballs", "total_handballs", "marks", "total_marks", "tackles", "total_tackles", "freekicks_for", "total_freekicks_for", "freekicks_against", "total_freekicks_against", "hitouts", "total_hitouts", "goals", "total_goals" , "behinds", "total_behinds", "avg5", "avg", "avg3", "own_raw", "livepts", "livegames", "owned")] |>
   as_tibble()
+
+}
+
+clean_player_stats_single_prev <- function(player_stats) {
+
+  player_stats[c("player_id", "round", "points")] |>
+    as_tibble()
 
 }
 

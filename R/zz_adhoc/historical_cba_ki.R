@@ -14,7 +14,7 @@ box::use(
 )
 
 
-player_stats_afl_2012_to_2024 <- 2012:2025 |> map(fetch_player_stats_afl) |> list_rbind()
+player_stats_afl_2012_to_2024 <- 2021:2025 |> map(fetch_player_stats_afl) |> list_rbind()
 
 
 # MT note to come back to the NA fix and see if this is actually a good approach
@@ -57,4 +57,4 @@ export <- player_stats_afl_2012_to_2024 |>
                                     if_else(teamName == "Gold Coast SUNS", "Gold Coast Suns",
                                             if_else(teamName == "GWS GIANTS", "GWS Giants", teamName)))))
 
-fwrite(export, here("data","exports","2025","_for_mm","zz_adhoc",paste0("2021_2025_r_4_cba_ki.csv")))
+fwrite(export, here("data","exports","2025","_for_mm","zz_adhoc",paste0("2021_2025_r_5_cba_ki.csv")))
