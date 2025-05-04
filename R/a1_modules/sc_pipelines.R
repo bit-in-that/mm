@@ -1,7 +1,11 @@
 box::use(
   dplyr[...],
   purrr[...],
-  httr2[...]
+  httr2[...],
+  stringr[str_locate, str_sub],
+  rvest[read_html, html_nodes, html_table],
+  here[here],
+  readxl[read_excel]
 )
 
 box::use(
@@ -21,6 +25,13 @@ players <- function(round = NULL, year = 2025, embed = "positions") {
 players_stats <- function(round = NULL, year = 2025, embed = "player_stats") {
   sc_api$get_players(round, year, embed) |>
     sc_tabulate$player_stats()
+
+}
+
+#' @export
+players_stats_prev <- function(round = NULL, year = 2025, embed = "player_stats") {
+  sc_api$get_players(round, year, embed) |>
+    sc_tabulate$player_stats_prev()
 
 }
 
