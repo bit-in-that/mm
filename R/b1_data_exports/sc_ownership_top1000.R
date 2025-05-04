@@ -19,10 +19,6 @@ sc_own <- function() {
 
   # TODO: remove need for this eventually
   current_round <- af_pipelines$current_round()
-  # TODO: remove need for this eventually
-  players_af <- af_pipelines$players()
-  # TODO: remove need for this eventually
-  squads <- af_pipelines$squads()
 
   rankings <- sc_pipelines$rankings(access_token, pages = 1:10)
   players <- sc_pipelines$players()
@@ -38,7 +34,8 @@ sc_own <- function() {
   lineups_top1000 |>
     pull(user_team_id) |>
     unique() |>
-    length()
+    length() |>
+    print()
 
   # for some reason the first time I ran it, it only got 750 teams, need to get the missing ones
   # TODO: might be because of parrallel processing, can look into this
