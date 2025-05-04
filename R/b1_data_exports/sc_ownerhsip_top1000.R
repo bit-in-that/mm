@@ -37,6 +37,8 @@ lineups_top1000 |>
   unique() |>
   length()
 
+rankings |> filter(team_id %in% lineups_top1000$user_team_id) |> pull(raw_position) |> setdiff(x = 1:1000)
+
 # for some reason the first time I ran it, it only got 750 teams, need to get the missing ones
 # TODO: might be because of parrallel processing, can look into this
 lineups_leftover <- rankings |>
@@ -44,8 +46,15 @@ lineups_leftover <- rankings |>
   pull(team_id) |>
   sc_pipelines$team_lineups(access_token = access_token)
 
+# Check number of teams is 1000 now
+lineups_top1000 |>
+  bind_rows(lineups_leftover) |>
+  pull(user_team_id) |>
+  unique() |>
+  length()
+
 sc_ownership <- lineups_top1000 |>
-  # bind_rows(lineups_leftover) |>
+  bind_rows(lineups_leftover) |>
   left_join(
     rankings |> select(team_id, raw_position),
     by = c("user_team_id" = "team_id")
