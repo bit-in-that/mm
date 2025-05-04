@@ -11,13 +11,29 @@ request_authorised <- function(api_url, access_token) {
 }
 
 # TODO: make default year no longer hard-coded to be 2025
+# https://www.supercoach.com.au/2025/api/afl/classic/v1/players-cf?embed=notes,odds,player_stats,positions
 #' @export
-get_players <- function(round = NULL, year = 2025, embed = "notes,odds,player_stats,positions") {
+get_players <- function(round = NULL, year = 2025, embed = "notes,odds,player_stats,player_match_stats,positions") {
   if(is.null(year)) {
     year <- Sys.time()
   }
   params <- list(embed = embed, round = round)
-  paste0("https://www.supercoach.com.au/", year,"/api/afl/classic/v1/players-cf") |>
+  paste0("https://www.supercoach.com.au/", year, "/api/afl/classic/v1/players-cf") |>
+    request() |>
+    req_url_query(!!!params) |>
+    req_perform() |>
+    resp_body_json()
+
+}
+
+# TODO: add triangulation and pipeline for this
+#' @export
+get_individual_players <- function(player_id, year = 2025, embed = "notes,odds,player_stats,player_match_stats,positions,trades") {
+  if(is.null(year)) {
+    year <- Sys.time()
+  }
+  params <- list(embed = embed)
+  paste0("https://www.supercoach.com.au/", year, "/api/afl/classic/v1/players/", player_id) |>
     request() |>
     req_url_query(!!!params) |>
     req_perform() |>
