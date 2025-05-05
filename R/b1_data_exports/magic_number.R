@@ -9,8 +9,11 @@ box::use(
   purrr[...],
   readr[read_csv],
   here[here],
+  dotenv[load_dot_env],
   DBI[dbConnect, dbWriteTable, dbExecute, dbGetQuery]
 )
+
+load_dot_env()
 
 db_host <- "ls-7189a7c3f9e8e50019ede4ba0e86c98674eaf21a.czyw0iuiknog.ap-southeast-2.rds.amazonaws.com"
 db_name <- "mm_data"

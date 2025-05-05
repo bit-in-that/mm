@@ -37,7 +37,7 @@ sc_magic_number <- magic_number$sc_magic_number(c_round = current_round, c_seaso
 # sc_magic_number <- 5177.453
 
 player_stats_2025 <- fetch_player_stats_afl(season = season)
-next_round <- current_round+1
+next_round <- current_round + 1
 upcoming_fix <- player_stats_2025 |>
   filter(round.roundNumber == next_round) |>
   distinct(home.team.name, away.team.name)
@@ -112,5 +112,8 @@ base_plus <- base_structure |>
   select(-c(away.team.name,home.team.name))
 
 
+output_path <- here("data","exports","2025","_for_mm",paste0("b_round_",sprintf("%02d", current_round)))
+dir.create(output_path)
 
-fwrite(base_plus, here("data","exports","2025","_for_mm",paste0("b_round_0",current_round),paste0("mm_master_table_r_",current_round,".csv")))
+fwrite(base_plus, here(output_path, paste0("mm_master_table_r_",current_round,".csv")))
+

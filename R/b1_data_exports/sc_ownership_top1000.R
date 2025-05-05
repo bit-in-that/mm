@@ -44,6 +44,14 @@ sc_own <- function() {
     pull(team_id) |>
     sc_pipelines$team_lineups(access_token = access_token)
 
+  # Check (again if) number of teams is 1000
+  lineups_top1000 |>
+    bind_rows(lineups_leftover) |>
+    pull(user_team_id) |>
+    unique() |>
+    length() |>
+    print()
+
   sc_ownership <- lineups_top1000 |>
     bind_rows(lineups_leftover) |>
     left_join(
@@ -62,7 +70,7 @@ sc_own <- function() {
       feed_id, Player, Team, OwnershipTotal
     ) |>
     summarise(
-      OwnershipTop1000 = sum(raw_position <= 1000L, na.rm = TRUE)/10,
+      OwnershipTop1000 = sum(raw_position <= 1000L, na.rm = TRUE) / 10,
       OwnershipTop100 = sum(raw_position <= 100L, na.rm = TRUE),
       OwnershipTop10 = sum(raw_position <= 10L, na.rm = TRUE) * 10,
       .groups = "drop"

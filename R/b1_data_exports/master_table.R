@@ -18,9 +18,12 @@ box::use(
   stringr[str_pad, str_detect],
   readr[read_csv],
   data.table[fwrite],
+  dotenv[load_dot_env],
   RMySQL[MySQL],
   DBI[dbConnect, dbWriteTable, dbExecute, dbGetQuery]
 )
+
+load_dot_env()
 
 db_host <- "ls-7189a7c3f9e8e50019ede4ba0e86c98674eaf21a.czyw0iuiknog.ap-southeast-2.rds.amazonaws.com"
 db_name <- "mm_data"
@@ -38,7 +41,7 @@ con <- dbConnect(
 )
 
 # define season
-season <- 2025
+# season <- 2025
 current_round <- af_pipelines$current_round()
 # current_round <- 5
 
@@ -511,7 +514,7 @@ sc_team_summary <- function(current_season){
 
 }
 
-af_big_table <- function(current_season, current_round){
+create_af_big_table <- function(current_season, current_round){
 
   season_data <- master_table |> filter(Season == current_season)
   season_data <- season_data |> filter(!is.na(AF))
@@ -706,7 +709,8 @@ af_big_table <- function(current_season, current_round){
 
 
 }
-sc_big_table <- function(current_season, current_round){
+
+create_sc_big_table <- function(current_season, current_round){
 
   season_data <- master_table |> filter(Season == current_season)
   season_data <- season_data |> filter(!is.na(SC))
@@ -909,8 +913,8 @@ sc_pp <- sc_price_projector(current_season = current_season, current_round = cur
 af_team <- af_team_summary(current_season = current_season)
 sc_team <- sc_team_summary(current_season = current_season)
 
-af_big_table <- af_big_table(current_season = current_season, current_round = current_round)
-sc_big_table <- sc_big_table(current_season = current_season, current_round = current_round)
+af_big_table <- create_af_big_table(current_season = current_season, current_round = current_round)
+sc_big_table <- create_sc_big_table(current_season = current_season, current_round = current_round)
 
 
 cba_data <- master_table |>
@@ -939,10 +943,10 @@ cba_data <- master_table |>
 
 
 cba_data <- cba_data |>
-  filter(season == season & roundNumber == current_round)
+  filter(Season == current_season & roundNumber == current_round)
 
-
-data_prev_cba <- dbGetQuery(con, paste0("SELECT * FROM cba"))
+# TODO: can remove the distinct, this was just a one-off
+data_prev_cba <- dbGetQuery(con, paste0("SELECT * FROM cba")) |> distinct()
 
 cba_data <- cba_data |>
   select(all_of(names(data_prev_cba)))
@@ -952,7 +956,7 @@ cba_out <- rbind(cba_data, data_prev_cba)
 
 # data_export
 
-# # Find the maximum length
+# Find the maximum length
 # max_len <- max(lengths(list(
 #   names(master_table),
 #   names(af_big_table),
@@ -995,7 +999,7 @@ cba_out <- rbind(cba_data, data_prev_cba)
 # dbExecute(con, "DROP TABLE cba")
 
 
-dbWriteTable(con, name = "master_table", value = master_table, row.names = FALSE,
+dbWriteTable(con, name = "master_table", value = master_table, row.names = FALSE, overwrite = TRUE,
              field.types = c(
                Season = "INT",
                Round = "INT",
@@ -1039,7 +1043,7 @@ dbWriteTable(con, name = "master_table", value = master_table, row.names = FALSE
                home_status = "VARCHAR(255)"
              ))
 
-dbWriteTable(con, name = "playerStatsAF", value = af_big_table, row.names = FALSE,
+dbWriteTable(con, name = "playerStatsAF", value = af_big_table, row.names = FALSE, overwrite = TRUE,
              field.types = c(
                Player = "VARCHAR(255)",
                Team = "VARCHAR(10)",
@@ -1084,7 +1088,7 @@ dbWriteTable(con, name = "playerStatsAF", value = af_big_table, row.names = FALS
                ReservesLast = "INT"
              ))
 
-dbWriteTable(con, name = "playerStatsSC", value = sc_big_table, row.names = FALSE,
+dbWriteTable(con, name = "playerStatsSC", value = sc_big_table, row.names = FALSE,overwrite = TRUE,
              field.types = c(
                Player = "VARCHAR(255)",
                Team = "VARCHAR(10)",
@@ -1129,7 +1133,7 @@ dbWriteTable(con, name = "playerStatsSC", value = sc_big_table, row.names = FALS
                ReservesLast = "INT"
              ))
 
-dbWriteTable(con, name = "teamStatsAF", value = af_team, row.names = FALSE,
+dbWriteTable(con, name = "teamStatsAF", value = af_team, row.names = FALSE,overwrite = TRUE,
              field.types = c(
                Team = "VARCHAR(255)",
                Icon = "VARCHAR(10)",
@@ -1149,7 +1153,7 @@ dbWriteTable(con, name = "teamStatsAF", value = af_team, row.names = FALSE,
                Top2OppFor = "INT"
              ))
 
-dbWriteTable(con, name = "teamStatsSC", value = sc_team, row.names = FALSE,
+dbWriteTable(con, name = "teamStatsSC", value = sc_team, row.names = FALSE,overwrite = TRUE,
              field.types = c(
                Team = "VARCHAR(255)",
                Icon = "VARCHAR(10)",
@@ -1169,7 +1173,7 @@ dbWriteTable(con, name = "teamStatsSC", value = sc_team, row.names = FALSE,
                Top2OppFor = "INT"
              ))
 
-dbWriteTable(con, name = "cba", value = cba_out, row.names = FALSE,
+dbWriteTable(con, name = "cba", value = cba_out, row.names = FALSE,overwrite = TRUE,
              field.types = c(
                Season = "INT",
                roundNumber = "INT",
@@ -1198,47 +1202,4 @@ dbGetQuery(con, "SELECT * FROM cba") |> nrow()
 #              field.types = c(
 #
 #              ))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
