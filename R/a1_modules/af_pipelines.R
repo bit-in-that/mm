@@ -2,7 +2,9 @@ box::use(
   dplyr[...],
   purrr[...],
   httr2[...],
-  utils[tail]
+  utils[tail],
+  readxl[read_excel],
+  here[here]
 )
 
 box::use(
@@ -39,10 +41,39 @@ players_by_round <- function() {
 }
 
 #' @export
-squads <- function() {
-  af_api$get_squads() |>
+squads <- function(apply_adhoc_changes = FALSE) {
+
+
+  squads <- af_api$get_squads() |>
     af_tabulate$squads() |>
     rename(squad_id = id)
+
+  if(apply_adhoc_changes) {
+    adhoc_changes_team_names_short <- read_excel(here("data","inputs","adhoc_changes.xlsx"), sheet = "team_names_short")
+    adhoc_changes_team_names <- read_excel(here("data","inputs","adhoc_changes.xlsx"), sheet = "team_names")
+
+    # the logic below depends on this being, true, if it is not the case please amend the code:
+    stopifnot(squads$full_name == squads$name)
+
+    squads <- squads |>
+      left_join(
+        adhoc_changes_team_names_short, by = c("short_name" = "afl")
+      ) |>
+      mutate(
+        short_name = coalesce(mm, short_name)
+      ) |>
+      select(-mm) |>
+      left_join(
+        adhoc_changes_team_names, by = c("full_name" = "afl")
+      ) |>
+      mutate(
+        full_name = coalesce(mm, full_name),
+        name = coalesce(mm, name)
+      ) |>
+      select(-mm)
+  }
+
+  return(squads)
 }
 
 #' @export

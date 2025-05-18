@@ -45,9 +45,13 @@ con <- dbConnect(
 current_round <- af_pipelines$current_round()
 # current_round <- 5
 
+adhoc_changes_team_names <- read_excel(here("data","inputs","adhoc_changes.xlsx"), sheet = "team_names")
+
 # read in previous
 data_prev <- dbGetQuery(con, paste0("SELECT * FROM master_table"))
-data_curr <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_0",current_round),paste0("mm_master_table_r_",current_round,".csv")))
+data_curr <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_",sprintf("%02d", current_round)),paste0("mm_master_table_r_",current_round,".csv")))
+
+
 
 data_prev <- data_prev |>
   select(-c("next_opp")) |>
@@ -57,136 +61,31 @@ data_prev <- data_prev |>
 data_prev <- data_prev |>
   select(all_of(names(data_curr)))
 
-master_table <- rbind(data_curr, data_prev)
+master_table <- bind_rows(data_curr, data_prev)
 
+
+# fix up team names (probably one need to do one  - at at r10 2025)
 master_table <- master_table |>
-  mutate(Opposition = if_else(Opposition == "Adelaide", "Adelaide Crows",
-                              if_else(Opposition == "Gold Coast Suns", "Gold Coast SUNS", Opposition)))
+  left_join(
+    adhoc_changes_team_names, by = c("Opposition" = "afl")
+  ) |>
+  mutate(
+    Opposition = coalesce(mm, Opposition)
+  ) |>
+  select(-mm) |>
+  left_join(
+    adhoc_changes_team_names, by = c("team.name" = "afl")
+  ) |>
+  mutate(
+    team.name = coalesce(mm, team.name)
+  ) |>
+  select(-mm)
+
 
 current_season <- max(master_table$Season)
 current_round <- max(master_table |>
                        filter(Season == current_season) |> pull(Round))
 
-af_price_projector <- function(current_season, current_round){
-
-  player_info <- master_table |>
-    filter(Season == current_season, Round == current_round) |>
-    select(Player, Team, Position, Price = af_cost, PricedAt = af_priced_at, Breakeven = af_be)
-
-  # 2. Get yearly averages for 2023, 2024, 2025
-  yearly_avg <- master_table |>
-    filter(Season %in% c(2023, 2024, current_season)) |>
-    group_by(Player, Season) |>
-    summarise(SeasonAvg = mean(AF, na.rm = TRUE), .groups = "drop") |>
-    pivot_wider(names_from = Season, values_from = SeasonAvg, names_prefix = "Avg") |>
-    rename(SeasonAvg = paste0("Avg", current_season))
-
-  # 3. Get Last N Scores (L01 to L05)
-  last_n_scores <- master_table |>
-    filter(Season == current_season, !is.na(AF)) |>
-    arrange(Player, desc(Round)) |>
-    group_by(Player) |>
-    mutate(row = row_number()) |>
-    filter(row <= 5) |>
-    select(Player, row, AF) |>
-    pivot_wider(names_from = row, values_from = AF, names_prefix = "L") |>
-    rename_with(~ paste0("L", str_pad(gsub("L", "", .), 2, pad = "0")), starts_with("L"))
-
-
-  # manual change
-
-  last_n_scores <- last_n_scores |>
-    mutate(L05 = as.double(NA))
-
-
-  # 4. Calculate Last3Avg and Last5Avg
-  last_x_avg <- last_n_scores |>
-    rowwise() |>
-    mutate(
-      Last3Avg = mean(c_across(c(L01, L02, L03))[c_across(c(L01, L02, L03)) > 0], na.rm = TRUE),
-      Last5Avg = mean(c_across(c(L01, L02, L03, L04, L05))[c_across(c(L01, L02, L03, L04, L05)) > 0], na.rm = TRUE)
-    ) |>
-    ungroup()
-
-  # 5. Combine everything
-  final_table <- player_info |>
-    left_join(yearly_avg, by = "Player") |>
-    left_join(last_x_avg, by = "Player") |>
-    mutate(
-      LastScore = L01
-    ) |>
-    select(Player, Team, Position, Price, PricedAt, Breakeven,
-           Avg2023 = Avg2023, Avg2024 = Avg2024,
-           L01, L02, L03, L04, L05,
-           LastScore, SeasonAvg, Last3Avg, Last5Avg)
-
-  # Optional: sort for neatness
-  final_table <- final_table |> arrange(Player) |>
-    mutate(across(everything(), ~replace_na(., 0)))
-
-  return(final_table)
-
-}
-sc_price_projector <- function(current_season, current_round){
-
-  player_info <- master_table |>
-    filter(Season == current_season, Round == current_round) |>
-    select(Player, Team, Position, Price = sc_cost, PricedAt = sc_priced_at, Breakeven = sc_be)
-
-  # 2. Get yearly averages for 2023, 2024, 2025
-  yearly_avg <- master_table |>
-    filter(Season %in% c(2023, 2024, current_season)) |>
-    group_by(Player, Season) |>
-    summarise(SeasonAvg = mean(SC, na.rm = TRUE), .groups = "drop") |>
-    pivot_wider(names_from = Season, values_from = SeasonAvg, names_prefix = "Avg") |>
-    rename(SeasonAvg = paste0("Avg", current_season))
-
-  # 3. Get Last N Scores (L01 to L05)
-  last_n_scores <- master_table |>
-    filter(Season == current_season, !is.na(SC)) |>
-    arrange(Player, desc(Round)) |>
-    group_by(Player) |>
-    mutate(row = row_number()) |>
-    filter(row <= 5) |>
-    select(Player, row, SC) |>
-    pivot_wider(names_from = row, values_from = SC, names_prefix = "L") |>
-    rename_with(~ paste0("L", str_pad(gsub("L", "", .), 2, pad = "0")), starts_with("L"))
-
-
-  # manual change
-
-  last_n_scores <- last_n_scores |>
-    mutate(L05 = as.double(NA))
-
-
-  # 4. Calculate Last3Avg and Last5Avg
-  last_x_avg <- last_n_scores |>
-    rowwise() |>
-    mutate(
-      Last3Avg = mean(c_across(c(L01, L02, L03))[c_across(c(L01, L02, L03)) > 0], na.rm = TRUE),
-      Last5Avg = mean(c_across(c(L01, L02, L03, L04, L05))[c_across(c(L01, L02, L03, L04, L05)) > 0], na.rm = TRUE)
-    ) |>
-    ungroup()
-
-  # 5. Combine everything
-  final_table <- player_info |>
-    left_join(yearly_avg, by = "Player") |>
-    left_join(last_x_avg, by = "Player") |>
-    mutate(
-      LastScore = L01
-    ) |>
-    select(Player, Team, Position, Price, PricedAt, Breakeven,
-           Avg2023 = Avg2023, Avg2024 = Avg2024,
-           L01, L02, L03, L04, L05,
-           LastScore, SeasonAvg, Last3Avg, Last5Avg)
-
-  # Optional: sort for neatness
-  final_table <- final_table |> arrange(Player) |>
-    mutate(across(everything(), ~replace_na(., 0)))
-
-  return(final_table)
-
-}
 af_team_summary <- function(current_season){
 
   # 1. Filter the season data to only include the current season and valid data
@@ -907,8 +806,6 @@ create_sc_big_table <- function(current_season, current_round){
 
 }
 
-af_pp <- af_price_projector(current_season = current_season, current_round = current_round)
-sc_pp <- sc_price_projector(current_season = current_season, current_round = current_round)
 
 af_team <- af_team_summary(current_season = current_season)
 sc_team <- sc_team_summary(current_season = current_season)
@@ -946,13 +843,13 @@ cba_data <- cba_data |>
   filter(Season == current_season & roundNumber == current_round)
 
 # TODO: can remove the distinct, this was just a one-off
-data_prev_cba <- dbGetQuery(con, paste0("SELECT * FROM cba")) |> distinct()
+data_prev_cba <- dbGetQuery(con, paste0("SELECT * FROM cba"))
 
 cba_data <- cba_data |>
   select(all_of(names(data_prev_cba)))
 
 
-cba_out <- rbind(cba_data, data_prev_cba)
+cba_out <- bind_rows(cba_data, data_prev_cba)
 
 # data_export
 
@@ -1192,7 +1089,6 @@ dbWriteTable(con, name = "cba", value = cba_out, row.names = FALSE,overwrite = T
                TeamKI = "INT"
              ))
 
-dbGetQuery(con, "SELECT * FROM cba") |> nrow()
 
 # dbWriteTable(con, name = "projectorAF", value = af_pp, row.names = FALSE, overwrite = TRUE,
 #              field.types = c(

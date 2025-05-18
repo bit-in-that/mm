@@ -18,6 +18,12 @@ box::use(
 #' @export
 cba_ki <- function(current_round, season) {
 
+  squads <- af_pipelines$squads(apply_adhoc_changes = TRUE)
+  squads_afl <- squads |>
+    mutate(
+      afl_id = paste0("CD_T", squad_id)
+    )
+
   player_stats <- fetch_player_stats_afl(season = season, round_number = current_round)
   af_players_by_round <- af_pipelines$players_by_round()
   sc_players_stats <- sc_pipelines$players_stats(round = current_round)
@@ -51,45 +57,64 @@ cba_ki <- function(current_round, season) {
     mutate(extendedStats.centreBounceAttendances = replace_na(extendedStats.centreBounceAttendances, 0)) |>
     mutate(extendedStats.kickins = replace_na(extendedStats.kickins, 0))
 
-  results_stats <- fetch_results_afl(season = 2025, round = current_round)
+  results_stats <- fetch_results_afl(season = season, round = current_round)
 
   results_stats <- results_stats |>
-    rowwise() |>
-    mutate(home_score = 6*homeTeamScoreChart.goals + sum(homeTeamScoreChart.leftBehinds,
-                                                         homeTeamScoreChart.rightBehinds,
-                                                         homeTeamScoreChart.leftPosters,
-                                                         homeTeamScoreChart.rightPosters,
-                                                         homeTeamScoreChart.rushedBehinds,
-                                                         homeTeamScoreChart.touchedBehinds)) |>
-    mutate(away_score = 6*awayTeamScoreChart.goals + sum(awayTeamScoreChart.leftBehinds,
-                                                         awayTeamScoreChart.rightBehinds,
-                                                         awayTeamScoreChart.leftPosters,
-                                                         awayTeamScoreChart.rightPosters,
-                                                         awayTeamScoreChart.rushedBehinds,
-                                                         awayTeamScoreChart.touchedBehinds)) |>
-    ungroup() |>
-    select(match.homeTeam.name, match.awayTeam.name, round.roundNumber, home_score, away_score) |>
-    rename(home.team.club.name = match.homeTeam.name,
-           away.team.club.name = match.awayTeam.name)
+    left_join(
+      squads_afl |> select(match.homeTeamId = afl_id, home.team.club.name = full_name),
+      by = "match.homeTeamId"
+      ) |>
+    left_join(
+      squads_afl |> select(match.awayTeamId = afl_id, away.team.club.name = full_name),
+      by = "match.awayTeamId"
+    )
 
-  results_stats_v2 <- results_stats |>
-    mutate(home.team.club.name = results_stats$away.team.club.name) |>
-    mutate(away.team.club.name = results_stats$home.team.club.name) |>
-    mutate(home_score = results_stats$away_score) |>
-    mutate(away_score = results_stats$home_score)
+  results_stats <- results_stats |>
+    mutate(home_score = 6 * homeTeamScoreChart.goals
+           + homeTeamScoreChart.leftBehinds
+           + homeTeamScoreChart.rightBehinds
+           + homeTeamScoreChart.leftPosters
+           + homeTeamScoreChart.rightPosters
+           + homeTeamScoreChart.rushedBehinds
+           + homeTeamScoreChart.touchedBehinds
+           ) |>
+    mutate(away_score = 6 * awayTeamScoreChart.goals
+           + awayTeamScoreChart.leftBehinds
+           + awayTeamScoreChart.rightBehinds
+           + awayTeamScoreChart.leftPosters
+           + awayTeamScoreChart.rightPosters
+           + awayTeamScoreChart.rushedBehinds
+           + awayTeamScoreChart.touchedBehinds) |>
+    select(match.homeTeamId, match.awayTeamId, home.team.club.name, away.team.club.name, round.roundNumber, home_score, away_score)
 
-  data <- rbind(results_stats, results_stats_v2)
+  team_result_data <- bind_rows(
+    results_stats |>
+      transmute(teamId = match.homeTeamId,
+                team.club.name = home.team.club.name, Opposition = away.team.club.name,
+                score = home_score, score_opp = away_score,
+                home_status = "home"
+                ),
+    results_stats |>
+      transmute(teamId = match.awayTeamId,
+                team.club.name = away.team.club.name, Opposition = home.team.club.name,
+                score = away_score, score_opp = home_score,
+                home_status = "away"
+                )
+  ) |>
+    mutate(result = case_when(
+      score == score_opp ~ "D",
+      score > score_opp ~ "W",
+      TRUE ~ "L"
+      )
+    ) |>
+    select(teamId, team.club.name, Opposition, home_status, result)
 
-  data <- data |>
-    mutate(result = if_else(home_score > away_score, "W",
-                            if_else(home_score == away_score, "D", "L"))) |>
-    select(team.name = home.team.club.name, result)
 
-  player_stats <- player_stats |>
-    left_join(data,
-              by = "team.name")
+  player_stats2 <- player_stats |>
+    left_join(team_result_data,
+              by = "teamId")
 
-  out_player_stats <- player_stats |>
+  out_player_stats <- player_stats2 |>
     group_by(teamId) |>
     mutate(
       TeamCBA = sum(extendedStats.centreBounceAttendances) /4,
@@ -106,9 +131,11 @@ cba_ki <- function(current_round, season) {
       KI_PERC = round(KI / TeamKI * 100, 0),
       TeamCBA,
       TeamKI,
-      team.name,
-      home.team.name,
-      away.team.name,
+      team.name = team.club.name,
+      Opposition,
+      home_status,
+      # home.team.name = home.team.club.name,
+      # away.team.name = away.team.club.name,
       venue.name,
       result
     )
