@@ -45,9 +45,13 @@ con <- dbConnect(
 current_round <- af_pipelines$current_round()
 # current_round <- 5
 
+adhoc_changes_team_names <- read_excel(here("data","inputs","adhoc_changes.xlsx"), sheet = "team_names")
+
 # read in previous
 data_prev <- dbGetQuery(con, paste0("SELECT * FROM master_table"))
-data_curr <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_0",current_round),paste0("mm_master_table_r_",current_round,".csv")))
+data_curr <- read_csv(here("data","exports","2025","_for_mm",paste0("b_round_",sprintf("%02d", current_round)),paste0("mm_master_table_r_",current_round,".csv")))
+
+
 
 data_prev <- data_prev |>
   select(-c("next_opp")) |>
@@ -57,11 +61,26 @@ data_prev <- data_prev |>
 data_prev <- data_prev |>
   select(all_of(names(data_curr)))
 
-master_table <- rbind(data_curr, data_prev)
+master_table <- bind_rows(data_curr, data_prev)
 
+
+# fix up team names (probably one need to do one  - at at r10 2025)
 master_table <- master_table |>
-  mutate(Opposition = if_else(Opposition == "Adelaide", "Adelaide Crows",
-                              if_else(Opposition == "Gold Coast Suns", "Gold Coast SUNS", Opposition)))
+  left_join(
+    adhoc_changes_team_names, by = c("Opposition" = "afl")
+  ) |>
+  mutate(
+    Opposition = coalesce(mm, Opposition)
+  ) |>
+  select(-mm) |>
+  left_join(
+    adhoc_changes_team_names, by = c("team.name" = "afl")
+  ) |>
+  mutate(
+    team.name = coalesce(mm, team.name)
+  ) |>
+  select(-mm)
+
 
 current_season <- max(master_table$Season)
 current_round <- max(master_table |>

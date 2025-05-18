@@ -38,7 +38,6 @@ sc_own <- function() {
     print()
 
   # for some reason the first time I ran it, it only got 750 teams, need to get the missing ones
-  # TODO: might be because of parrallel processing, can look into this
   lineups_leftover <- rankings |>
     filter(!team_id %in% unique(lineups_top1000$user_team_id)) |>
     pull(team_id) |>
