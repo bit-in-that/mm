@@ -903,8 +903,8 @@ sc_big_table <- function(current_season, current_round){
 
 }
 
-af_pp <- af_price_projector(current_season = current_season, current_round = current_round)
-sc_pp <- sc_price_projector(current_season = current_season, current_round = current_round)
+# af_pp <- af_price_projector(current_season = current_season, current_round = current_round)
+# sc_pp <- sc_price_projector(current_season = current_season, current_round = current_round)
 
 af_team <- af_team_summary(current_season = current_season)
 sc_team <- sc_team_summary(current_season = current_season)
@@ -939,7 +939,7 @@ cba_data <- master_table |>
 
 
 cba_data <- cba_data |>
-  filter(season == season & roundNumber == current_round)
+  filter(Season == season & roundNumber == current_round)
 
 
 data_prev_cba <- dbGetQuery(con, paste0("SELECT * FROM cba"))
@@ -1037,7 +1037,7 @@ dbWriteTable(con, name = "master_table", value = master_table, row.names = FALSE
                sc_priced_at = "INT",
                Opposition = "VARCHAR(255)",
                home_status = "VARCHAR(255)"
-             ))
+             ), overwrite = T)
 
 dbWriteTable(con, name = "playerStatsAF", value = af_big_table, row.names = FALSE,
              field.types = c(
@@ -1082,7 +1082,7 @@ dbWriteTable(con, name = "playerStatsAF", value = af_big_table, row.names = FALS
                OppCareer = "INT",
                ReservesAvg = "INT",
                ReservesLast = "INT"
-             ))
+             ), overwrite = T)
 
 dbWriteTable(con, name = "playerStatsSC", value = sc_big_table, row.names = FALSE,
              field.types = c(
@@ -1127,7 +1127,7 @@ dbWriteTable(con, name = "playerStatsSC", value = sc_big_table, row.names = FALS
                OppCareer = "INT",
                ReservesAvg = "INT",
                ReservesLast = "INT"
-             ))
+             ), overwrite = T)
 
 dbWriteTable(con, name = "teamStatsAF", value = af_team, row.names = FALSE,
              field.types = c(
@@ -1147,7 +1147,7 @@ dbWriteTable(con, name = "teamStatsAF", value = af_team, row.names = FALSE,
                Top2OppDef = "INT",
                Top2For = "INT",
                Top2OppFor = "INT"
-             ))
+             ), overwrite = T)
 
 dbWriteTable(con, name = "teamStatsSC", value = sc_team, row.names = FALSE,
              field.types = c(
@@ -1167,7 +1167,7 @@ dbWriteTable(con, name = "teamStatsSC", value = sc_team, row.names = FALSE,
                Top2OppDef = "INT",
                Top2For = "INT",
                Top2OppFor = "INT"
-             ))
+             ), overwrite = T)
 
 dbWriteTable(con, name = "cba", value = cba_out, row.names = FALSE,
              field.types = c(
@@ -1186,9 +1186,9 @@ dbWriteTable(con, name = "cba", value = cba_out, row.names = FALSE,
                SC = "INT",
                TeamCBA = "INT",
                TeamKI = "INT"
-             ))
+             ), overwrite = T)
 
-dbGetQuery(con, "SELECT * FROM cba") |> nrow()
+# dbGetQuery(con, "SELECT * FROM cba") |> nrow()
 
 # dbWriteTable(con, name = "projectorAF", value = af_pp, row.names = FALSE, overwrite = TRUE,
 #              field.types = c(
