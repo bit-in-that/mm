@@ -20,11 +20,12 @@ box::use(
   data.table[fwrite],
   dotenv[load_dot_env],
   RMySQL[MySQL],
+  readxl[read_excel],
   DBI[dbConnect, dbWriteTable, dbExecute, dbGetQuery]
 )
 
 load_dot_env()
-
+# TODO: put the remaining credentials in dot env
 db_host <- "ls-7189a7c3f9e8e50019ede4ba0e86c98674eaf21a.czyw0iuiknog.ap-southeast-2.rds.amazonaws.com"
 db_name <- "mm_data"
 db_user <- "dbmasteruser"
@@ -813,43 +814,6 @@ sc_team <- sc_team_summary(current_season = current_season)
 af_big_table <- create_af_big_table(current_season = current_season, current_round = current_round)
 sc_big_table <- create_sc_big_table(current_season = current_season, current_round = current_round)
 
-
-cba_data <- master_table |>
-  select(Season,
-         roundNumber= Round,
-         matchId,
-         playerId= player_id,
-         name= Player,
-         TOG,
-         AF,
-         CBA,
-         KI,
-         teamName= team.name,
-         CBA_PERC,
-         KI_PERC,
-         SC,
-         TeamCBA,
-         TeamKI) |>
-  filter(!is.na(AF)) |>
-  filter(Season >= 2021) |>
-  mutate(teamName = if_else(teamName == "Adelaide Crows", "Adelaide",
-                            if_else(teamName == "Footscray", "Western Bulldogs",
-                                    if_else(teamName == "Gold Coast SUNS", "Gold Coast Suns",
-                                            if_else(teamName == "GWS GIANTS", "GWS Giants", teamName))))) |>
-  mutate(across(everything(), ~replace_na(., 0)))
-
-
-cba_data <- cba_data |>
-  filter(Season == current_season & roundNumber == current_round)
-
-# TODO: can remove the distinct, this was just a one-off
-data_prev_cba <- dbGetQuery(con, paste0("SELECT * FROM cba"))
-
-cba_data <- cba_data |>
-  select(all_of(names(data_prev_cba)))
-
-
-cba_out <- bind_rows(cba_data, data_prev_cba)
 
 # data_export
 

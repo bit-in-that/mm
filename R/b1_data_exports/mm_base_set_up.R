@@ -32,6 +32,7 @@ squads <- af_pipelines$squads(apply_adhoc_changes = TRUE)
 # fix this one up later
 # sc_breakevens <- sc_breakevens$sc_breakevens()
 af_ownership <- af_ownership_top1000$af_own()
+
 # NOTE: probably best to run this one inside sc_ownership_top1000.R due to annoying thing where it misses some teams
 sc_ownership <- sc_ownership_top1000$sc_own()
 # note home team and away team in this table are using the wrong names (not adjusted for Adelaide and gold coast "SUNS" etc.) but I don't think they end up being uned
