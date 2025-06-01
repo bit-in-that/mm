@@ -1034,24 +1034,7 @@ dbWriteTable(con, name = "teamStatsSC", value = sc_team, row.names = FALSE,overw
                Top2OppFor = "INT"
              ))
 
-dbWriteTable(con, name = "cba", value = cba_out, row.names = FALSE,overwrite = TRUE,
-             field.types = c(
-               Season = "INT",
-               roundNumber = "INT",
-               matchId = "VARCHAR(255)",
-               playerId = "VARCHAR(255)",
-               name = "VARCHAR(255)",
-               TOG = "INT",
-               AF = "INT",
-               CBA = "INT",
-               KI = "INT",
-               teamName = "VARCHAR(255)",
-               CBA_PERC = "INT",
-               KI_PERC = "INT",
-               SC = "INT",
-               TeamCBA = "INT",
-               TeamKI = "INT"
-             ))
+
 
 
 # dbWriteTable(con, name = "projectorAF", value = af_pp, row.names = FALSE, overwrite = TRUE,

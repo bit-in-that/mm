@@ -41,10 +41,10 @@ af_magic_number <- magic_number$af_magic_number(c_round = current_round)
 sc_magic_number <- magic_number$sc_magic_number(c_round = current_round, c_season = current_season)
 # sc_magic_number <- 5177.453
 
-player_stats_2025 <- fetch_player_stats_afl(season = current_season)
+player_stats_current_season <- fetch_player_stats_afl(season = current_season)
 # make the logic below work automatically by making sure the club names are consistent (team.name can change while team.club.name appears to stay the same e.g. during indigenous round)
 adhoc_changes_team_names <- read_excel(here("data","inputs","adhoc_changes.xlsx"), sheet = "team_names")
-player_stats_2025 <- player_stats_2025 |>
+player_stats_current_season <- player_stats_current_season |>
   mutate(
     home.team.name = home.team.club.name,
     away.team.name = away.team.club.name
@@ -66,7 +66,7 @@ player_stats_2025 <- player_stats_2025 |>
 
 
 next_round <- current_round + 1
-upcoming_fix <- player_stats_2025 |>
+upcoming_fix <- player_stats_current_season |>
   filter(round.roundNumber == next_round) |>
   distinct(home.team.name, away.team.name)
 upcoming_fix_flipped <- upcoming_fix |>
@@ -77,7 +77,12 @@ upcoming_fix_flipped <- upcoming_fix |>
 # this should be using team ids instead to avoid annoyance:
 next_fix <- bind_rows(upcoming_fix, upcoming_fix_flipped) |>
   rename(team.name = home.team.name,
-         next_opp = away.team.name)
+         next_opp = away.team.name) |>
+  left_join(
+    squads |> select(Team = short_name, team.name = full_name),
+    by = "team.name"
+  ) |>
+  select(-team.name)
 
 # adhoc changes (monitor throughout the season with Mid season draft)
 # idea: create a function to apply adhoc changes to a dataset (but perhaps this is too much abstraction)
@@ -128,7 +133,7 @@ base_plus <- base_structure |>
   left_join(sc_magic_number,
             by = "player_id") |>
   left_join(next_fix,
-            by = "team.name") |>
+            by = "Team") |>
   rename(af_magic_number = mn,
          sc_magic_number = sc_mn) |>
   mutate(
