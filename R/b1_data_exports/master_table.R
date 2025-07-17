@@ -206,8 +206,8 @@ af_team_summary <- function(current_season){
 
   # 7. Create team abbreviation mapping
   team_abbreviations <- tibble(
-    team.name = c("Adelaide Crows", "Brisbane Lions", "Carlton", "Collingwood", "Essendon", "Fremantle",
-                  "GWS GIANTS", "Geelong Cats", "Gold Coast SUNS", "Hawthorn", "Melbourne", "North Melbourne",
+    team.name = c("Adelaide", "Brisbane Lions", "Carlton", "Collingwood", "Essendon", "Fremantle",
+                  "GWS Giants", "Geelong Cats", "Gold Coast Suns", "Hawthorn", "Melbourne", "North Melbourne",
                   "Port Adelaide", "Richmond", "St Kilda", "Sydney Swans", "West Coast Eagles", "Western Bulldogs"),
     Icon = c("ADE", "BRL", "CAR", "COLL", "ESS", "FRE", "GWS", "GEE", "GCS", "HAW", "MEL", "NTH",
              "PORT", "RICH", "STK", "SYD", "WCE", "WB")
@@ -369,8 +369,8 @@ sc_team_summary <- function(current_season){
 
   # 7. Create team abbreviation mapping
   team_abbreviations <- tibble(
-    team.name = c("Adelaide Crows", "Brisbane Lions", "Carlton", "Collingwood", "Essendon", "Fremantle",
-                  "GWS GIANTS", "Geelong Cats", "Gold Coast SUNS", "Hawthorn", "Melbourne", "North Melbourne",
+    team.name = c("Adelaide", "Brisbane Lions", "Carlton", "Collingwood", "Essendon", "Fremantle",
+                  "GWS Giants", "Geelong Cats", "Gold Coast Suns", "Hawthorn", "Melbourne", "North Melbourne",
                   "Port Adelaide", "Richmond", "St Kilda", "Sydney Swans", "West Coast Eagles", "Western Bulldogs"),
     Icon = c("ADE", "BRL", "CAR", "COLL", "ESS", "FRE", "GWS", "GEE", "GCS", "HAW", "MEL", "NTH",
              "PORT", "RICH", "STK", "SYD", "WCE", "WB")
@@ -556,6 +556,22 @@ create_af_big_table <- function(current_season, current_round){
     ) |>
     mutate(Last3PPM = Last3Score/Last3TG)
 
+  # 4. Last 3 Game Averages
+  last5 <- master_table |>
+    filter(Season == current_season) |>
+    filter(!is.na(AF), !is.na(minutes_played)) |>
+    arrange(player_id, desc(Season), desc(Round)) |>
+    group_by(player_id) |>
+    slice_head(n = 5) |>
+    summarise(
+      Last5Score = mean(AF, na.rm = TRUE),
+      Last5TG = mean(TOG, na.rm = TRUE),
+      Last5CBA = mean(CBA_PERC, na.rm = TRUE),
+      Last5KI = mean(KI_PERC, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    mutate(Last5PPM = Last5Score/Last5TG)
+
   opp_table <- master_table |>
     filter(Opposition == next_opp) |>
     arrange(player_id, desc(Season), desc(Round)) |>
@@ -584,6 +600,7 @@ create_af_big_table <- function(current_season, current_round){
     left_join(price_and_ownership_chg, by = "player_id") |>
     left_join(season_avg, by = "player_id") |>
     left_join(last3, by = "player_id") |>
+    left_join(last5, by = "player_id") |>
     left_join(season_avg_loss, by = "player_id") |>
     left_join(season_avg_win, by = "player_id") |>
     left_join(season_avg_home, by = "player_id") |>
@@ -752,6 +769,21 @@ create_sc_big_table <- function(current_season, current_round){
     ) |>
     mutate(Last3PPM = Last3Score/Last3TG)
 
+  last5 <- master_table |>
+    filter(Season == current_season) |>
+    filter(!is.na(SC), !is.na(minutes_played)) |>
+    arrange(player_id, desc(Season), desc(Round)) |>
+    group_by(player_id) |>
+    slice_head(n = 5) |>
+    summarise(
+      Last5Score = mean(SC, na.rm = TRUE),
+      Last5TG = mean(TOG, na.rm = TRUE),
+      Last5CBA = mean(CBA_PERC, na.rm = TRUE),
+      Last5KI = mean(KI_PERC, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    mutate(Last5PPM = Last5Score/Last5TG)
+
   opp_table <- master_table |>
     filter(Opposition == next_opp) |>
     arrange(player_id, desc(Season), desc(Round)) |>
@@ -813,6 +845,8 @@ sc_team <- sc_team_summary(current_season = current_season)
 
 af_big_table <- create_af_big_table(current_season = current_season, current_round = current_round)
 sc_big_table <- create_sc_big_table(current_season = current_season, current_round = current_round)
+
+
 
 
 # data_export
