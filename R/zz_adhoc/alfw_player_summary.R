@@ -260,8 +260,4 @@ aflw_player_stats |>
     mmRank,	dateOfBirth
   ) |>
   fwrite(here("data/exports/aflw", paste0("aflw_player_hist_", current_season, "_alt.csv")))
-
-
-
-# TODO: create an alt version with other information team name, ruck contests, finals average, u18 avg, state comp avg
-
+  
