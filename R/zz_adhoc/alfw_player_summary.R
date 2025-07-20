@@ -7,14 +7,6 @@ box::use(
   fitzRoy[...]
 )
 
-get_afl_cookie <- function() {
-
-  response <- POST("https://api.afl.com.au/cfs/afl/WMCTok")
-  token <- content(response)$token
-
-  return(token)
-}
-
 
 current_season <- 2025
 previous_season <- current_season - 1
@@ -25,8 +17,6 @@ total_minutes_per_game <- 80 # this is an approximation (there is an API to get 
 
 
 afl_token <- get_afl_cookie()
-
-aflw_player_details_2025 <- fetch_player_details(season = current_season, comp = "AFLW")
 
 
 competitions <- request("https://aflapi.afl.com.au/afl/v2/competitions?pageSize=50") |>
@@ -226,6 +216,8 @@ aflw_average_summary <- aflw_player_stats_by_round |>
     finals = mean(if_else(is_finals, dreamTeamPoints, NA_real_), na.rm = TRUE)
   )
 
+
+aflw_player_details_2025 <- fetch_player_details(season = current_season, comp = "AFLW")
 
 aflw_player_stats <- aflw_player_details_2025 |>
   transmute(
