@@ -10,24 +10,7 @@ box::use(
   readr[read_csv],
   here[here],
   dotenv[load_dot_env],
-  DBI[dbConnect, dbWriteTable, dbExecute, dbGetQuery]
-)
-
-load_dot_env()
-
-db_host <- "ls-7189a7c3f9e8e50019ede4ba0e86c98674eaf21a.czyw0iuiknog.ap-southeast-2.rds.amazonaws.com"
-db_name <- "mm_data"
-db_user <- "dbmasteruser"
-db_password <- Sys.getenv("sql_password")
-db_port <- 3306
-
-con <- dbConnect(
-  RMySQL::MySQL(),
-  host = db_host,
-  dbname = db_name,
-  user = db_user,
-  password = db_password,
-  port = db_port
+  DBI[dbConnect, dbWriteTable, dbExecute, dbGetQuery, dbDisconnect]
 )
 
 
@@ -147,8 +130,25 @@ af_magic_number <- function(c_round) {
 #' @export
 sc_magic_number <- function(c_round, c_season) {
 
-  # c_round <- 5
+  # c_round <- 12
   # c_season <- 2025
+  load_dot_env()
+
+  db_host <- "ls-7189a7c3f9e8e50019ede4ba0e86c98674eaf21a.czyw0iuiknog.ap-southeast-2.rds.amazonaws.com"
+  db_name <- "mm_data"
+  db_user <- "dbmasteruser"
+  db_password <- Sys.getenv("sql_password")
+  db_port <- 3306
+
+  con <- dbConnect(
+    RMySQL::MySQL(),
+    host = db_host,
+    dbname = db_name,
+    user = db_user,
+    password = db_password,
+    port = db_port
+  )
+
 
   sc_data <- sc_pipelines$players_stats(round = c_round)
   sc_players <- sc_pipelines$players()
@@ -181,6 +181,9 @@ sc_magic_number <- function(c_round, c_season) {
     select(player_id, Round = round, SC = points)
 
   data_prev <- dbGetQuery(con, paste0("SELECT player_id, Round, SC FROM master_table where Season = ",c_season))
+
+  # disconnect the connection to the DB
+  dbDisconnect(con)
 
   points_data <- rbind(data_curr, data_prev)
 

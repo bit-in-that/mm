@@ -23,15 +23,6 @@ af_own <- function() {
 
   adhoc_changes_id <- read_excel(here("data","inputs","adhoc_changes.xlsx"), sheet = "player_id")
 
-  players <- players |>
-    mutate(player_id = paste0("CD_I", player_id)) |>
-    left_join(adhoc_changes_id |>
-                select(-Name),
-              by = "player_id") |>
-    mutate(player_id = if_else(is.na(player.playerId), player_id, player.playerId)) |>
-    select(-c(player.playerId)) |>
-    mutate(player_id = as.integer(sub("^CD_I", "", player_id)))
-
 
   lineups_top1000 <- rankings |>
     filter(rank %in% 1:1000) |>
@@ -68,6 +59,17 @@ af_own <- function() {
            "af_OwnershipTop100" = "OwnershipTop100",
            "af_OwnershipTop10" = "OwnershipTop10") |>
     mutate(player_id = paste0("CD_I",player_id))
+
+  # fix up nic martin ID:
+  af_ownership <- af_ownership |>
+    left_join(
+      adhoc_changes_id |> select(player_id, player_id_new = player.playerId),
+      by = "player_id"
+    ) |>
+    mutate(
+      player_id = coalesce(player_id_new, player_id)
+    ) |>
+    select(-player_id_new)
 
   return(af_ownership)
 

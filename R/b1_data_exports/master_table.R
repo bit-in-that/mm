@@ -20,11 +20,12 @@ box::use(
   data.table[fwrite],
   dotenv[load_dot_env],
   RMySQL[MySQL],
+  readxl[read_excel],
   DBI[dbConnect, dbWriteTable, dbExecute, dbGetQuery]
 )
 
 load_dot_env()
-
+# TODO: put the remaining credentials in dot env
 db_host <- "ls-7189a7c3f9e8e50019ede4ba0e86c98674eaf21a.czyw0iuiknog.ap-southeast-2.rds.amazonaws.com"
 db_name <- "mm_data"
 db_user <- "dbmasteruser"
@@ -205,8 +206,8 @@ af_team_summary <- function(current_season){
 
   # 7. Create team abbreviation mapping
   team_abbreviations <- tibble(
-    team.name = c("Adelaide Crows", "Brisbane Lions", "Carlton", "Collingwood", "Essendon", "Fremantle",
-                  "GWS GIANTS", "Geelong Cats", "Gold Coast SUNS", "Hawthorn", "Melbourne", "North Melbourne",
+    team.name = c("Adelaide", "Brisbane Lions", "Carlton", "Collingwood", "Essendon", "Fremantle",
+                  "GWS Giants", "Geelong Cats", "Gold Coast Suns", "Hawthorn", "Melbourne", "North Melbourne",
                   "Port Adelaide", "Richmond", "St Kilda", "Sydney Swans", "West Coast Eagles", "Western Bulldogs"),
     Icon = c("ADE", "BRL", "CAR", "COLL", "ESS", "FRE", "GWS", "GEE", "GCS", "HAW", "MEL", "NTH",
              "PORT", "RICH", "STK", "SYD", "WCE", "WB")
@@ -368,8 +369,8 @@ sc_team_summary <- function(current_season){
 
   # 7. Create team abbreviation mapping
   team_abbreviations <- tibble(
-    team.name = c("Adelaide Crows", "Brisbane Lions", "Carlton", "Collingwood", "Essendon", "Fremantle",
-                  "GWS GIANTS", "Geelong Cats", "Gold Coast SUNS", "Hawthorn", "Melbourne", "North Melbourne",
+    team.name = c("Adelaide", "Brisbane Lions", "Carlton", "Collingwood", "Essendon", "Fremantle",
+                  "GWS Giants", "Geelong Cats", "Gold Coast Suns", "Hawthorn", "Melbourne", "North Melbourne",
                   "Port Adelaide", "Richmond", "St Kilda", "Sydney Swans", "West Coast Eagles", "Western Bulldogs"),
     Icon = c("ADE", "BRL", "CAR", "COLL", "ESS", "FRE", "GWS", "GEE", "GCS", "HAW", "MEL", "NTH",
              "PORT", "RICH", "STK", "SYD", "WCE", "WB")
@@ -555,6 +556,22 @@ create_af_big_table <- function(current_season, current_round){
     ) |>
     mutate(Last3PPM = Last3Score/Last3TG)
 
+  # 4. Last 3 Game Averages
+  last5 <- master_table |>
+    filter(Season == current_season) |>
+    filter(!is.na(AF), !is.na(minutes_played)) |>
+    arrange(player_id, desc(Season), desc(Round)) |>
+    group_by(player_id) |>
+    slice_head(n = 5) |>
+    summarise(
+      Last5Score = mean(AF, na.rm = TRUE),
+      Last5TG = mean(TOG, na.rm = TRUE),
+      Last5CBA = mean(CBA_PERC, na.rm = TRUE),
+      Last5KI = mean(KI_PERC, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    mutate(Last5PPM = Last5Score/Last5TG)
+
   opp_table <- master_table |>
     filter(Opposition == next_opp) |>
     arrange(player_id, desc(Season), desc(Round)) |>
@@ -583,6 +600,7 @@ create_af_big_table <- function(current_season, current_round){
     left_join(price_and_ownership_chg, by = "player_id") |>
     left_join(season_avg, by = "player_id") |>
     left_join(last3, by = "player_id") |>
+    left_join(last5, by = "player_id") |>
     left_join(season_avg_loss, by = "player_id") |>
     left_join(season_avg_win, by = "player_id") |>
     left_join(season_avg_home, by = "player_id") |>
@@ -751,6 +769,21 @@ create_sc_big_table <- function(current_season, current_round){
     ) |>
     mutate(Last3PPM = Last3Score/Last3TG)
 
+  last5 <- master_table |>
+    filter(Season == current_season) |>
+    filter(!is.na(SC), !is.na(minutes_played)) |>
+    arrange(player_id, desc(Season), desc(Round)) |>
+    group_by(player_id) |>
+    slice_head(n = 5) |>
+    summarise(
+      Last5Score = mean(SC, na.rm = TRUE),
+      Last5TG = mean(TOG, na.rm = TRUE),
+      Last5CBA = mean(CBA_PERC, na.rm = TRUE),
+      Last5KI = mean(KI_PERC, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    mutate(Last5PPM = Last5Score/Last5TG)
+
   opp_table <- master_table |>
     filter(Opposition == next_opp) |>
     arrange(player_id, desc(Season), desc(Round)) |>
@@ -814,42 +847,7 @@ af_big_table <- create_af_big_table(current_season = current_season, current_rou
 sc_big_table <- create_sc_big_table(current_season = current_season, current_round = current_round)
 
 
-cba_data <- master_table |>
-  select(Season,
-         roundNumber= Round,
-         matchId,
-         playerId= player_id,
-         name= Player,
-         TOG,
-         AF,
-         CBA,
-         KI,
-         teamName= team.name,
-         CBA_PERC,
-         KI_PERC,
-         SC,
-         TeamCBA,
-         TeamKI) |>
-  filter(!is.na(AF)) |>
-  filter(Season >= 2021) |>
-  mutate(teamName = if_else(teamName == "Adelaide Crows", "Adelaide",
-                            if_else(teamName == "Footscray", "Western Bulldogs",
-                                    if_else(teamName == "Gold Coast SUNS", "Gold Coast Suns",
-                                            if_else(teamName == "GWS GIANTS", "GWS Giants", teamName))))) |>
-  mutate(across(everything(), ~replace_na(., 0)))
 
-
-cba_data <- cba_data |>
-  filter(Season == current_season & roundNumber == current_round)
-
-# TODO: can remove the distinct, this was just a one-off
-data_prev_cba <- dbGetQuery(con, paste0("SELECT * FROM cba"))
-
-cba_data <- cba_data |>
-  select(all_of(names(data_prev_cba)))
-
-
-cba_out <- bind_rows(cba_data, data_prev_cba)
 
 # data_export
 
@@ -1070,24 +1068,7 @@ dbWriteTable(con, name = "teamStatsSC", value = sc_team, row.names = FALSE,overw
                Top2OppFor = "INT"
              ))
 
-dbWriteTable(con, name = "cba", value = cba_out, row.names = FALSE,overwrite = TRUE,
-             field.types = c(
-               Season = "INT",
-               roundNumber = "INT",
-               matchId = "VARCHAR(255)",
-               playerId = "VARCHAR(255)",
-               name = "VARCHAR(255)",
-               TOG = "INT",
-               AF = "INT",
-               CBA = "INT",
-               KI = "INT",
-               teamName = "VARCHAR(255)",
-               CBA_PERC = "INT",
-               KI_PERC = "INT",
-               SC = "INT",
-               TeamCBA = "INT",
-               TeamKI = "INT"
-             ))
+
 
 
 # dbWriteTable(con, name = "projectorAF", value = af_pp, row.names = FALSE, overwrite = TRUE,
