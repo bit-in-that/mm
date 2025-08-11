@@ -2,8 +2,8 @@ name: AFL Fantasy Team Value
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 18 * * 0" # 4AM AEST every monday
+  # schedule:
+  # - cron: "0 18 * * 0" # 4AM AEST every monday
 
 jobs:
   build:
