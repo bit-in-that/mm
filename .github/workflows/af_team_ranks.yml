@@ -2,8 +2,8 @@ name: AFL Fantasy Team Ranks
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 16 * * 0" # 2AM AEST every monday
+  # schedule:
+  #   - cron: "0 16 * * 0" # 2AM AEST every monday
 
 jobs:
   build:
